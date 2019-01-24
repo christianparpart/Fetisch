@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <Tailcalls>false</Tailcalls>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Util.fs" />
+    <Compile Include="ModNum.fs" />
+    <Compile Include="BigRational.fs" />
+    <Compile Include="Permutation.fs" />
+    <Compile Include="LinearAlgebra\Vector.fs" />
+    <Compile Include="LinearAlgebra\Matrix.fs" />
+    <Compile Include="SymbolicAlgebra\Expr.fs" />
+    <Compile Include="SymbolicAlgebra\ExprParser.fs" />
+    <Compile Include="SymbolicAlgebra\ExprMatcher.fs" />
+    <Compile Include="SymbolicAlgebra\Transform.fs" />
+    <Compile Include="SymbolicAlgebra\Simplifier.fs" />
+    <Compile Include="SymbolicAlgebra\Calculator.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.6.0" />
+  </ItemGroup>
+
+</Project>
