@@ -29,6 +29,8 @@ let trySimplify exprStr =
 
 [<EntryPoint>]
 let main argv =
+    Symbolics.Test.main()
+
     // Aufgabe 1, Matrix B
     let λ = SymbolExpr("λ")
     let a = Matrix.create [[2G*λ;  λ; -1G; 3G*λ];
@@ -57,5 +59,5 @@ let main argv =
     //printfn "%s" (Matrix.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
 
-    //Console.ReadKey() |> ignore
+    Console.ReadKey() |> ignore
     0

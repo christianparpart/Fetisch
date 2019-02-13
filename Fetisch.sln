@@ -3,14 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.271
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fetisch", "Fetisch\Fetisch.fsproj", "{C71905A8-EBE2-4638-A7F1-44C2338E764D}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fetisch", "src\Fetisch\Fetisch.fsproj", "{65883197-FEB5-4E57-B4F0-819D1B9EBE58}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fetisch.Test", "Fetisch.Test\Fetisch.Test.fsproj", "{F9E4CB77-63E1-4CB0-B750-3CBA72E1D8E6}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C71905A8-EBE2-4638-A7F1-44C2338E764D} = {C71905A8-EBE2-4638-A7F1-44C2338E764D}
-	EndProjectSection
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fetisch.Example1", "src\Fetisch.Example1\Fetisch.Example1.fsproj", "{CEAA3AEC-FCE6-471C-9DB4-28319C817675}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fetisch.Example1", "Fetisch.Example1\Fetisch.Example1.fsproj", "{0E323279-4E1A-45F7-B298-332D6A6BE49E}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fetisch.Test", "src\Fetisch.Test\Fetisch.Test.fsproj", "{245B9FE2-952F-4F4D-BFB0-E20F84B683C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,18 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C71905A8-EBE2-4638-A7F1-44C2338E764D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C71905A8-EBE2-4638-A7F1-44C2338E764D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C71905A8-EBE2-4638-A7F1-44C2338E764D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C71905A8-EBE2-4638-A7F1-44C2338E764D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F9E4CB77-63E1-4CB0-B750-3CBA72E1D8E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9E4CB77-63E1-4CB0-B750-3CBA72E1D8E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F9E4CB77-63E1-4CB0-B750-3CBA72E1D8E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9E4CB77-63E1-4CB0-B750-3CBA72E1D8E6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0E323279-4E1A-45F7-B298-332D6A6BE49E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0E323279-4E1A-45F7-B298-332D6A6BE49E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0E323279-4E1A-45F7-B298-332D6A6BE49E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0E323279-4E1A-45F7-B298-332D6A6BE49E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65883197-FEB5-4E57-B4F0-819D1B9EBE58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65883197-FEB5-4E57-B4F0-819D1B9EBE58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65883197-FEB5-4E57-B4F0-819D1B9EBE58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65883197-FEB5-4E57-B4F0-819D1B9EBE58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEAA3AEC-FCE6-471C-9DB4-28319C817675}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEAA3AEC-FCE6-471C-9DB4-28319C817675}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEAA3AEC-FCE6-471C-9DB4-28319C817675}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEAA3AEC-FCE6-471C-9DB4-28319C817675}.Release|Any CPU.Build.0 = Release|Any CPU
+		{245B9FE2-952F-4F4D-BFB0-E20F84B683C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{245B9FE2-952F-4F4D-BFB0-E20F84B683C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{245B9FE2-952F-4F4D-BFB0-E20F84B683C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{245B9FE2-952F-4F4D-BFB0-E20F84B683C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

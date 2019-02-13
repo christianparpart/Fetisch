@@ -14,6 +14,7 @@
     <Compile Include="ModNum.fs" />
     <Compile Include="BigRational.fs" />
     <Compile Include="Permutation.fs" />
+    <Compile Include="Symbolics.fs" />
     <Compile Include="LinearAlgebra\Vector.fs" />
     <Compile Include="LinearAlgebra\Matrix.fs" />
     <Compile Include="SymbolicAlgebra\Expr.fs" />

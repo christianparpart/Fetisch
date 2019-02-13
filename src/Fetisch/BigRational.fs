@@ -21,7 +21,8 @@ module Helper =
         else
             gcd a b
 
-[<StructuredFormatDisplay("{StructuredDisplayString}N")>]
+[<StructuredFormatDisplay("{AsString}")>]
+//[<StructuredFormatDisplay("{StructuredDisplayString}N")>]
 type BigRational(_nominator: bigint, _denominator: bigint) =
     member val Nominator = _nominator
     member val Denominator = _denominator
@@ -58,6 +59,8 @@ type BigRational(_nominator: bigint, _denominator: bigint) =
     static member FromIntFraction(a: int, b: int) = BigRational.Normalize (bigint a, bigint b)
     static member FromBigInt(n: bigint) = BigRational.Normalize (n, bigint.One)
     static member FromBigIntFraction(a, b: bigint) = BigRational.Normalize (a, b)
+
+    member this.AsString = this.ToString()
 
     override this.ToString() =
         if this.Nominator.IsZero || this.Denominator.IsZero then "0"
