@@ -11,14 +11,6 @@ open Fetisch.Algebra
 open Fetisch.LinearAlgebra
 open Fetisch.SymbolicAlgebra
 
-let printPermutations (a: Permutation list) =
-    printfn "Number of permutations: %d" (List.length a)
-    let sprint (p: Permutation) =
-        Array.fold (fun a v -> sprintf "%s%3d" a v) "" (Permutation.range p)
-    let sa = List.sort (List.map sprint a)
-    for s in sa do
-        printfn "<%s>" s
-
 do Console.OutputEncoding <- Text.Encoding.UTF8
 
 let trySimplify exprStr =
@@ -27,10 +19,7 @@ let trySimplify exprStr =
     let s2 = e2.ToString()
     printfn "%*s%A = %A" ((max 15 (s2.Length)) - s2.Length) " " e2 e1
 
-[<EntryPoint>]
-let main argv =
-    Symbolics.Test.main()
-
+let misc () =
     // Aufgabe 1, Matrix B
     let λ = SymbolExpr("λ")
     let a = Matrix.create [[2G*λ;  λ; -1G; 3G*λ];
@@ -59,5 +48,9 @@ let main argv =
     //printfn "%s" (Matrix.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
 
+[<EntryPoint>]
+let main argv =
+    Experimental.Symbolics.Test.main()
     Console.ReadKey() |> ignore
     0
+
