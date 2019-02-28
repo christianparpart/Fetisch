@@ -32,6 +32,7 @@ type Expr =
         static member ( / ) (a: Expr, b: Expr) : Expr = DivExpr(a, b)
         static member ( ^^ ) (a: Expr, b: Expr) : Expr = PowExpr(a, b)
         static member ( ~- ) (x: Expr) : Expr = NegExpr(x)
+        static member ( ~+ ) (x: Expr) : Expr = x
         static member Abs (x: Expr) : Expr = AbsExpr(x)
 
         member this.Precedence =
