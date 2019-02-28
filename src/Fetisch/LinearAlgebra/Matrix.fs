@@ -153,7 +153,7 @@ module Matrix =
     let inline transpose (mat: Matrix< ^F>) : Matrix< ^F> =
         init (columnCount mat) (rowCount mat) (fun i j -> mat.[j, i])
 
-    /// Computes the algebraic complement matrix of the matrix element at given line i and column j.
+    /// Constructs the algebraic complement matrix of the matrix element at given line i and column j.
     let inline complement (mat: Matrix< ^G>) (i: int) (j: int) : Matrix< ^G> =
         let m = -1 + rowCount mat
         let n = -1 + columnCount mat
@@ -194,12 +194,11 @@ module Matrix =
                     // each row/col gets a score, which is the sum of its elements. elect row/col with best score
                     let i = 1
                     for j = 1 to columnCount mat do
-                        //let sgn = if (i + j) % 2 = 0 then GenericOne else -GenericOne
-                        //yield sgn * mat.[i, j] * det (complement mat i j)
-                        if i + j % 2 = 0 then
-                            yield mat.[i, j] * det (complement mat i j)
-                        else
-                            yield -mat.[i, j] * det (complement mat i j)
+                        let minor =
+                            if i + j % 2 = 0
+                            then +det (complement mat i j)
+                            else -det (complement mat i j)
+                        yield mat.[i, j] * minor
                 }
                 Seq.fold (+) GenericZero dets
 
@@ -208,14 +207,21 @@ module Matrix =
 
         det mat
 
-    // Computes the minor of given element at position i,j in matrix mat.
-    //let inline minor mat i j =
     let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
         // (-1)^(i + j) * det(complement mat i j)
         let det = determinant (complement mat i j)
-        match i + j % 2 with
-        | 0 -> +det
-        | _ -> -det
+        if i + j % 2 = 0
+        then +det
+        else -det
+
+    // Computes the minor of given element at position i,j in matrix mat.
+    //let inline minor mat i j =
+    //let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
+    //    // (-1)^(i + j) * det(complement mat i j)
+    //    let det = determinant (complement mat i j)
+    //    match i + j % 2 with
+    //    | 0 -> +det
+    //    | _ -> -det
 
     //let inline rank (mat: Matrix< ^F>): ^F = () // TODO
 
