@@ -24,19 +24,27 @@ module Helper =
 [<StructuredFormatDisplay("{AsString}")>]
 //[<StructuredFormatDisplay("{StructuredDisplayString}N")>]
 type BigRational(_nominator: bigint, _denominator: bigint) =
-    member val Nominator = _nominator
+    member val Numerator = _nominator
     member val Denominator = _denominator
 
     new(value: int) = BigRational(bigint value, bigint.One)
 
     static member op_Explicit (value: BigRational): float =
-        float (value.Nominator) / float (value.Denominator)
+        float (value.Numerator) / float (value.Denominator)
 
     static member Zero = BigRational(0I, 1I)
     static member One = BigRational(1I, 1I)
     static member MinusOne = BigRational(-1I, 1I)
 
-    member this.Sign = this.Nominator.Sign
+    member this.Sign = this.Numerator.Sign
+    member this.IsPositive = this.Sign > 0
+    member this.IsNegative = this.Sign < 0
+
+    member this.IsZero = this.Numerator.IsZero
+    member this.IsOne = this.Numerator = this.Denominator
+    member this.IsInteger = this.Denominator.IsOne
+
+    member this.Reciprocal = BigRational(this.Denominator, this.Numerator)
 
     static member Normalize(a: bigint, b: bigint) =
         if b = bigint.Zero then
@@ -63,37 +71,46 @@ type BigRational(_nominator: bigint, _denominator: bigint) =
     member this.AsString = this.ToString()
 
     override this.ToString() =
-        if this.Nominator.IsZero || this.Denominator.IsZero then "0"
-        elif this.Denominator.IsOne then this.Nominator.ToString()
-        else sprintf "%s/%s" (this.Nominator.ToString()) (this.Denominator.ToString())
+        if this.Numerator.IsZero || this.Denominator.IsZero then "0"
+        elif this.Denominator.IsOne then this.Numerator.ToString()
+        else sprintf "%s/%s" (this.Numerator.ToString()) (this.Denominator.ToString())
 
     static member ( ~+ ) (a: BigRational) =
-        BigRational.Normalize (-a.Nominator, a.Denominator)
+        BigRational.Normalize (-a.Numerator, a.Denominator)
 
     static member ( ~- ) (a: BigRational) =
-        BigRational.Normalize (-a.Nominator, a.Denominator)
+        BigRational.Normalize (-a.Numerator, a.Denominator)
 
     static member ( + ) (a: BigRational, b: BigRational) =
-        BigRational.Normalize (a.Nominator*b.Denominator + b.Nominator*a.Denominator, a.Denominator * b.Denominator)
+        BigRational.Normalize (a.Numerator*b.Denominator + b.Numerator*a.Denominator, a.Denominator * b.Denominator)
 
     static member ( - ) (a: BigRational, b: BigRational) =
-        BigRational.Normalize (a.Nominator*b.Denominator - b.Nominator*a.Denominator, a.Denominator * b.Denominator)
+        BigRational.Normalize (a.Numerator*b.Denominator - b.Numerator*a.Denominator, a.Denominator * b.Denominator)
 
     static member ( * ) (a: BigRational, b: BigRational) =
-        BigRational.Normalize (a.Nominator * b.Nominator, a.Denominator * b.Denominator)
+        BigRational.Normalize (a.Numerator * b.Numerator, a.Denominator * b.Denominator)
 
     static member ( / ) (a: BigRational, b: BigRational) =
-        BigRational.Normalize (a.Nominator * b.Denominator,
-                               a.Denominator * b.Nominator)
+        BigRational.Normalize (a.Numerator * b.Denominator,
+                               a.Denominator * b.Numerator)
 
     static member ToDouble (a: BigRational) =
-        float a.Nominator / float a.Denominator
+        float a.Numerator / float a.Denominator
 
     static member Inverse (p: BigRational) =
-        BigRational.Normalize (p.Denominator, p.Nominator)
+        BigRational.Normalize (p.Denominator, p.Numerator)
 
     static member Abs (p: BigRational) =
-        BigRational.Normalize (abs(p.Nominator), p.Denominator)
+        BigRational.Normalize (abs(p.Numerator), p.Denominator)
+
+    static member Pow (p: BigRational, q: BigRational) =
+        //   (a/b) ^ (c/d)
+        // = ((a/b)^c)^(1/d)
+        // = ((a/b)^(1/d))^c
+        let u = q.Numerator
+        let v = q.Denominator
+        let x = BigRational.FromBigIntFraction(p.Numerator ** int(1I / v), p.Denominator ** int(1I / v))
+        BigRational.FromBigIntFraction(x.Numerator ** int(u), x.Denominator ** int(u))
 
     static member Parse (str: string) =
         match str.Split('/') with
@@ -102,13 +119,13 @@ type BigRational(_nominator: bigint, _denominator: bigint) =
         | _ -> invalidOp "Invalid string format"
 
     static member Compare(a: BigRational, b: BigRational) : int =
-        compare (a.Nominator * b.Denominator) (b.Nominator * a.Denominator)
+        compare (a.Numerator * b.Denominator) (b.Numerator * a.Denominator)
 
-    override this.GetHashCode() = hash ( this.Nominator, this.Denominator )
+    override this.GetHashCode() = hash ( this.Numerator, this.Denominator )
 
     override this.Equals(thatObj) =
         match thatObj with
-        | :? BigRational as that -> this.Nominator = that.Nominator && this.Denominator = that.Denominator
+        | :? BigRational as that -> this.Numerator = that.Numerator && this.Denominator = that.Denominator
         | _ -> false
 
     interface System.IComparable with

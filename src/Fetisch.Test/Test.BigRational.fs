@@ -15,7 +15,7 @@ open Fetisch
 let ``creation & ops`` () =
     let a = 2N
     Assert.Equal(2N, a)
-    Assert.Equal(2I, a.Nominator)
+    Assert.Equal(2I, a.Numerator)
     Assert.Equal(1I, a.Denominator)
 
 [<Fact>]
