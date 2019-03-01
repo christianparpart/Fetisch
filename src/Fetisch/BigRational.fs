@@ -23,8 +23,8 @@ module Helper =
 
 [<StructuredFormatDisplay("{AsString}")>]
 //[<StructuredFormatDisplay("{StructuredDisplayString}N")>]
-type BigRational(_nominator: bigint, _denominator: bigint) =
-    member val Numerator = _nominator
+type BigRational(_numerator: bigint, _denominator: bigint) =
+    member val Numerator = _numerator
     member val Denominator = _denominator
 
     new(value: int) = BigRational(bigint value, bigint.One)
