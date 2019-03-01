@@ -207,6 +207,7 @@ module Matrix =
 
         det mat
 
+    // Computes the minor of a matrix element.
     let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
         // (-1)^(i + j) * det(complement mat i j)
         let det = determinant (complement mat i j)
@@ -214,14 +215,24 @@ module Matrix =
         then +det
         else -det
 
-    // Computes the minor of given element at position i,j in matrix mat.
-    //let inline minor mat i j =
-    //let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
-    //    // (-1)^(i + j) * det(complement mat i j)
-    //    let det = determinant (complement mat i j)
-    //    match i + j % 2 with
-    //    | 0 -> +det
-    //    | _ -> -det
+    // Computes the cofactor of a given element this matrix.
+    let inline cofactorAt (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
+        mat.[i, j] * (minor mat i j)
+
+    // Constructs a cofactor matrix, with each element to be the cofactor of the corresponding input matrix's element.
+    let inline cofactor (mat: Matrix< ^G>) : Matrix< ^G> =
+        init (rowCount mat) (columnCount mat) (cofactorAt mat)
+
+    // The adjugate matrix is the transpose of a cofactor matrix.
+    let inline adjugate (mat: Matrix< ^G>) : Matrix< ^G> =
+        transpose (cofactor mat)
+
+    // Constructs the inverse matrix using minor
+    let inline inverse (mat: Matrix< ^G>) : Matrix< ^G> =
+        let det = determinant mat
+        if det = GenericZero then
+            invalidArg "mat" "Matrix is not invertable"
+        (GenericOne / det) * (adjugate mat)
 
     //let inline rank (mat: Matrix< ^F>): ^F = () // TODO
 
