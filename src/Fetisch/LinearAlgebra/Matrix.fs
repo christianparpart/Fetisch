@@ -237,12 +237,13 @@ module Matrix =
     //let inline rank (mat: Matrix< ^F>): ^F = () // TODO
 
     let inline foldElements (folder: (^T -> ^F -> ^T)) (init: ^T) (mat: Matrix< ^F>): ^T =
-        // TODO: rewrite to immutable (Array.fold?)
-        let mutable y = init
-        for i = 1 to rowCount mat do
-            for j = 1 to columnCount mat do
-                y <- folder y mat.[i, j]
-        y
+        let elements =
+            seq {
+                for i = 1 to rowCount mat do
+                    for j = 1 to columnCount mat do
+                        yield mat.[i, j]
+            }
+        Seq.fold folder init elements
 
     let inline density (mat: Matrix< ^F>): float =
         let total = rowCount mat * columnCount mat
