@@ -7,7 +7,9 @@
 
 namespace Fetisch.LinearAlgebra
 
+open Fetisch.Algebra
 open Fetisch.Util
+
 open FSharp.Core.LanguagePrimitives
 
 // TODO: type Matrix< ^F when ^F : equality> (values: ^F [,]) =
@@ -169,7 +171,19 @@ module Matrix =
                 | false -> mat.[k + 1, l + 1]
         init m n initf
 
-    /// Computes the determinant of given matrix.
+    // Computes the determinant using Leibnitz formula
+    let inline determinantLeibnitz (mat: Matrix< ^F>) : ^F =
+        let sum (acc: ^F) (pi: Permutation) : ^F =
+            let rhs = Map.fold (fun acc i p -> acc * mat.[i, p]) GenericZero (pi.ToMap())
+            if Permutation.sgn pi > 0 then
+                acc + rhs
+            else
+                acc - rhs
+        if not (isQuadratic mat) then
+            invalidArg "mat" "Matrix must be quadratic to compute its trace."
+        List.fold sum GenericZero (Permutation.all (rowCount mat))
+
+    /// Computes the determinant of given matrix using Laplace expansion.
     let inline determinant (mat: Matrix< ^F>) : ^F =
         let rec det (mat: Matrix< ^F>) : ^F =
             match rowCount mat with
