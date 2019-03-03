@@ -64,17 +64,13 @@ type Expression =
             | Constant c -> c.ToString()
             | Function (f, e) -> sprintf "%s(%s)" (f.ToString()) (e.ToString())
             | Sum s ->
-                let folder a t =
-                    match a with
-                    | "" -> t.ToString()
-                    | _  -> sprintf "%s + %s" a (t.ToString())
-                "(" + (List.fold folder "" s) + ")"
+                let folder (a: string) (t: Expression) : string =
+                    if a = "" then embrace t else sprintf "%s + %s" a (embrace t)
+                List.fold folder "" s
             | Product p ->
-                let folder a t =
-                    match a with
-                    | "" -> t.ToString()
-                    | _  -> sprintf "%s * %s" a (t.ToString())
-                "(" + (List.fold folder "" p) + ")"
+                let folder (a: string) (t: Expression) : string =
+                    if a = "" then embrace t else sprintf "%s * %s" a (embrace t)
+                List.fold folder "" p
             | Power (b, e) ->
                 sprintf "%s^%s" (embrace b) (embrace e)
 
@@ -108,6 +104,7 @@ module Patterns =
 
 module Operations =
     open Patterns
+    open FSharp.Core.LanguagePrimitives
 
     let zero = Number(BigRational.Zero)
     let one = Number(BigRational.One)
@@ -152,103 +149,88 @@ module Operations =
 
     // Creates the Sum of two summands.
     let rec add (x: Expression) (y: Expression): Expression =
-        printfn "Add: x=%A, y=%A" x y
+        let sum = function
+            | Number a, Number b -> Number(a + b)
+            | a, b -> Sum([a; b])
+
+        //  Matches a multiplicative term in the form of (a*x)
         let (|Term|_|) = function
             | Number _ -> None
-            | Product [a; b] -> Some (a, b)
-            | Product (a :: rest) -> Some (a, Product rest)
-            | x -> Some (one, x)
-        let sum (a: Expression, b: Expression): Expression =
-            printfn "Add.Sum: a=%A, b=%A" a b
-            match a, b with
-            | Number a', Number b' -> Number(a' + b')
-            | _ -> Sum([a; b])
+            | Product [a; b] ->
+                printfn "|Term| %A * %A" a b
+                Some (a, b)
+            | Product (a::rest) -> Some (a, Product rest)
+            | x ->
+                printfn "|Term| one * (%A)" x
+                Some (one, x)
+
+        // Folds 2 expression lists into a single expression list.
+        let rec fold = function
+            | Zero::acc, a, b -> fold (acc, a, b)
+            | Term(a, x)::p, Term(b, x')::q, r when x = x' -> fold ((mul (sum (a, b)) x)::p, q, r)
+            | Term(a, x)::p, r, Term(b, x')::q when x = x' -> fold ((mul (sum (a, b)) x)::p, q, r)
+            | r, Term(a, x)::p, Term(b, x')::q when x = x' -> fold ((mul (sum (a, b)) x)::r, p, q)
+            | r, x::xs, y::ys when orderRelation x y       -> fold (x::r, xs, y::ys)
+            | r, x::xs, y::ys                              -> fold (y::r, x::xs, ys)
+            | r, x::xs, []                                 -> fold (x::r, xs, [])
+            | r, [], y::ys                                 -> fold (y::r, [], ys)
+            | r, [], []                                    -> r
+
         let merge (u: Expression list) (v: Expression list): Expression =
-            printfn "Add.Merge: u=%A, v=%A" u v
-            let rec fold (acc: Expression list) (u: Expression list) (v: Expression list): Expression list =
-                printfn "Add.Merge.Fold: acc=%A, u=%A, v=%A" acc u v
-                match acc, u, v with
-                | Zero::acc', _, _ ->
-                    printfn "  match (Zero::acc, _, _): acc'=%A" acc'
-                    fold acc' u v
-                | Term(ac, at)::acc', Term(xc, xt)::xs, y when at = xt ->
-                    printfn "  match ac: %A; xc: %A" ac xc
-                    fold ((mul (sum (ac, xc)) at)::acc') xs y
-                | Term(ac, at)::acc', x, Term(yc, yt)::ys when at = yt ->
-                    printfn "  match ac: %A; yc: %A" ac yc
-                    fold ((mul (sum (ac, yc)) at)::acc') x ys
-                | _, Term(xc, xt)::xs, Term(yc, yt)::ys when xt = yt ->
-                    // (a*x + p) + (b*y + q) = (a+b)*x + p + q
-                    printfn "match (_, xc: %A; yc: %A)" xc yc
-                    fold ((mul (sum (xc, yc)) xt)::acc) xs ys
-                | _, x::xs, y::ys ->
-                    printfn "  match (_, x::xs, y::ys): x=%A, xs=%A, y=%A, ys=%A" x xs y ys
-                    if orderRelation x y
-                    then fold (x::acc) xs v
-                    else fold (y::acc) u ys
-                | _, x::xs, [] ->
-                    printfn "  match (_, x::xs, []): x=%A, xs=%A" x xs
-                    fold (x::acc) xs []
-                | _, [], y::ys ->
-                    printfn "  match (_, [], y::ys): y=%A, ys=%A" y ys
-                    fold (y::acc) [] ys
-                | _, [], [] ->
-                    printfn "  match (_, [], [])"
-                    acc
-            match fold [] u v with
+            match fold ([], u, v) with
             | []  -> zero
             | [x] -> x
             | x   -> Sum (List.rev x)
-        match x, y with
-        | Zero, _ -> y
-        | _, Zero -> x
-        | Number a, Number b ->
-            printfn "Add.match (num, num): a=%A, b=%A" a b
-            Number (a + b)
-        | Sum (Number(a)::ax), Sum (Number(b)::bx) ->
-            printfn "Add.match (Sum(Num(a)::ax), Sum(Num(b)::bx): a=%A, ax=%A, b=%A, bx=%A" a ax b bx
-            add (Number(a + b)) (merge ax bx)
-        | Sum (Number(a)::ax), Number b ->
-            printfn "Add.match (Sum(Num(a)::ax) Num(b): a=%A, ax=%A, b=%A" a ax b
-            add (Number (a + b)) (Sum ax)
-        | Sum(ax), Sum(bx) ->
-            printfn "Add.match (Sum(ax), Sum(bx)): ax=%A, bx=%A" ax bx
-            merge ax bx
-        | Sum(ax), b ->
-            printfn "Add.match (Sum(ax), b): ax=%A, b=%A" ax b
-            merge ax [b]
-        | a, Sum(bx) ->
-            printfn "Add.match (a, Sum(bx)): a=%A, bx=%A" a bx
-            merge [a] bx
-        | a, b ->
-            printfn "Add.match (a, b): a=%A, b=%A" a b
-            merge [a] [b]
+
+        let rec valueAdd (v: BigRational) (x: Expression) : Expression =
+            match x with
+            | Sum [] -> Number v
+            | Sum ((Number a)::ax) -> valueAdd (v + a) (Sum ax)
+            | Sum ax -> if v = GenericZero then x else Sum ((Number v)::ax)
+            | x when v = GenericZero -> x
+            | _ -> Sum [Number v; x]
+
+        match (x, y) with
+        | Zero, a -> a
+        | a, Zero -> a
+
+        | Number a, b -> valueAdd a b
+        | a, Number b -> valueAdd b a
+
+        | Sum ((Number a)::ax), Sum ((Number b)::bx) -> valueAdd (a + b) (merge ax bx)
+
+        | Sum ((Number a)::ax), Sum bx -> valueAdd a (merge ax bx)
+        | Sum ax, Sum ((Number b)::bx) -> valueAdd b (merge ax bx)
+
+        | Sum ((Number a)::ax), b -> valueAdd a (merge ax [b])
+        | a, Sum ((Number b)::bx) -> valueAdd b (merge bx [a])
+
+        | Sum ax, Sum bx    -> merge ax bx
+        | Sum ax, b         -> merge ax [b]
+
+        | a, Sum bx         -> merge [a] bx
+
+        | a, b              -> merge [a] [b]
 
     // Creates the product of two factors.
     and mul (x: Expression) (y: Expression): Expression =
         let (|Term|_|) = function
             | Number _ -> None
             | Power(a, b) -> Some (a, b)
-            | any -> Some (any, one)
+            | x -> Some (x, one)
+
+        let rec fold = function
+            | One::r, a, b -> fold (r, a, b)
+            | Term(ab,ae)::r, Term(xb, xe)::xs, y when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
+            | Term(ab,ae)::r, y, Term(xb, xe)::xs when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
+            | r, Term(xb,xe)::xs, Term(yb,ye)::ys when xb = yb -> fold ((pow xb (add xe ye))::r, xs, ys)
+            | r, x::xs, y::ys -> if orderRelation x y then fold (x::r, xs, y::ys) else fold (y::r, x::xs, ys)
+            | r, x::xs, y -> fold (x::r, xs, y)
+            | r, [], y::ys -> fold (y::r, ys, [])
+            | r, [], [] -> r
 
         let merge (u: Expression list) (v: Expression list): Expression =
-            let rec fold (acc: Expression list) (u: Expression list) (v: Expression list): Expression list =
-                match acc, u, v with
-                | One::acc', _, _ ->
-                    fold acc' u v
-                | Term(ab,ae)::acc', Term(xb,xe)::xs, y
-                | Term(ab,ae)::acc', y, Term(xb,xe)::xs when ab = xb ->
-                    fold ((pow ab (add ae xe))::acc') xs y
-                | _, Term(xb,xe)::xs, Term(yb,ye)::ys when xb = yb ->
-                    fold ((pow xb (add xe ye))::acc) xs ys
-                | _, x::xs, y::ys ->
-                    if orderRelation x y
-                    then fold (x::acc) xs v
-                    else fold (y::acc) u ys
-                | _, x::xs, y -> fold (x::acc) xs y
-                | _, [], y::ys -> fold (y::acc) ys []
-                | _, [], [] -> acc
-            match fold [] u v with
+            match fold ([], u, v) with
             | []  -> one
             | [t] -> t
             | s   -> Product(List.rev s)
@@ -256,18 +238,12 @@ module Operations =
         match x, y with
         | One, a | a, One -> a
         | Zero, _ | _, Zero -> zero
-        | Number a, Number b ->
-            Number (a * b)
-        | Product (Number(a)::ax), Product (Number(b)::bx) ->
-            mul (Number(a * b)) (merge ax bx)
-        | Product(ax), Product(bx) ->
-            merge ax bx
-        | Product(ax), _ ->
-            merge ax [y]
-        | _, Product(bx) ->
-            merge [x] bx
-        | _ ->
-            merge [x] [y]
+        | Number a, Number b -> Number (a * b)
+        | Product (Number(a)::ax), Product (Number(b)::bx) -> mul (Number(a * b)) (merge ax bx)
+        | Product(ax), Product(bx) -> merge ax bx
+        | Product(ax), b -> merge ax [b]
+        | a, Product(bx) -> merge [a] bx
+        | a, b -> merge [a] [b]
 
     and pow (x: Expression) (y: Expression) =
         match x, y with
@@ -320,14 +296,41 @@ module NumericLiteralG =
     let FromInt64 (x: int64) = Expression.FromBigInt (bigint x)
     let FromString (x: string) = bigint.Parse x |> Expression.FromBigInt
 
+module Parser =
+    type Token =
+        | Illegal
+        | Whitespace
+        | Eof
+        | Plus
+        | Minus
+        | Mul
+        | Div
+        | Pow
+        | NumberLiteral
+        | Identifier
+        | RndOpen
+        | RndClose
+
+    type TokenInfo = { Token: Token; Literal: string }
+
+    //let tokenize (s: string) : seq<TokenInfo> =
+    //    let str = Seq.toList s
+    //    let rec tokenize (str: char list) : TokenInfo * (char list) =
+    //        match str with
+    //        | ' '::xs -> { Token = Whitespace; Literal = " " }, xs
+    //        | [] -> { Token = Eof; Literal = "" }, []
+    //        | unknown::xs -> { Token = Illegal; Literal = string unknown }, xs
+    //    seq {
+    //        let t, r = tokenize (Seq.toList s)
+    //        yield t
+    //        yield! tokenize r
+    //    }
+
+    // let parseString (s: string) : Expression =
+
 module Test =
     open Operations
     let main () =
         let x = var "x"
-        //let d = (x * (2G + 3G) * 4G) ** 2G
-        //let d = x * (x ** (3G + x))
-        //let d = 1G + (3G + x)
-        //let d = (2G + x) + 1G
-        let d = (2G + 3G) + 4G
-        printfn "d: %A" d
+        printfn "x: %A" (3G + (x + 5G))
 
