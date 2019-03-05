@@ -193,24 +193,24 @@ module Operations =
         match (x, y) with
         | Zero, a -> a
         | a, Zero -> a
-
+        // one constant value and one something else
         | Number a, b -> valueAdd a b
         | a, Number b -> valueAdd b a
-
+        // both Sum have constant value
         | Sum ((Number a)::ax), Sum ((Number b)::bx) -> valueAdd (a + b) (merge ax bx)
-
+        // one Sum has constant value, other is Sum without constant value
         | Sum ((Number a)::ax), Sum bx -> valueAdd a (merge ax bx)
         | Sum ax, Sum ((Number b)::bx) -> valueAdd b (merge ax bx)
-
+        // one Sum has constant value, other is not a Sum
         | Sum ((Number a)::ax), b -> valueAdd a (merge ax [b])
         | a, Sum ((Number b)::bx) -> valueAdd b (merge bx [a])
-
-        | Sum ax, Sum bx    -> merge ax bx
-        | Sum ax, b         -> merge ax [b]
-
-        | a, Sum bx         -> merge [a] bx
-
-        | a, b              -> merge [a] [b]
+        // two arbitrary Sum lists
+        | Sum ax, Sum bx -> merge ax bx
+        // one Sum and something else
+        | Sum ax, b -> merge ax [b]
+        | a, Sum bx -> merge [a] bx
+        // two non-Sum summands
+        | a, b -> merge [a] [b]
 
     // Creates the product of two factors.
     and mul (x: Expression) (y: Expression): Expression =
