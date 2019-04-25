@@ -10,6 +10,7 @@ open Fetisch
 open Fetisch.Algebra
 open Fetisch.LinearAlgebra
 open Fetisch.SymbolicAlgebra
+open FSharp.Charting
 
 do Console.OutputEncoding <- Text.Encoding.UTF8
 
@@ -51,6 +52,7 @@ let misc () =
 [<EntryPoint>]
 let main argv =
     Experimental.Symbolics.Test.main()
+
     Console.ReadKey() |> ignore
     0
 

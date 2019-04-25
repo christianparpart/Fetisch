@@ -14,9 +14,10 @@
     <Compile Include="ModNum.fs" />
     <Compile Include="BigRational.fs" />
     <Compile Include="Permutation.fs" />
-    <Compile Include="Symbolics.fs" />
     <Compile Include="LinearAlgebra\Vector.fs" />
     <Compile Include="LinearAlgebra\Matrix.fs" />
+    <Compile Include="SymbolicAlgebra2\Expression.fs" />
+    <Compile Include="SymbolicAlgebra2\ExprParser.fs" />
     <Compile Include="SymbolicAlgebra\Expr.fs" />
     <Compile Include="SymbolicAlgebra\ExprParser.fs" />
     <Compile Include="SymbolicAlgebra\ExprMatcher.fs" />
