@@ -7,7 +7,9 @@
 
 namespace Fetisch.LinearAlgebra
 
+open Fetisch.Algebra
 open Fetisch.Util
+
 open FSharp.Core.LanguagePrimitives
 
 // TODO: type Matrix< ^F when ^F : equality> (values: ^F [,]) =
@@ -169,7 +171,19 @@ module Matrix =
                 | false -> mat.[k + 1, l + 1]
         init m n initf
 
-    /// Computes the determinant of given matrix.
+    // Computes the determinant using Leibnitz formula
+    let inline determinantLeibnitz (mat: Matrix< ^F>) : ^F =
+        let sum (acc: ^F) (pi: Permutation) : ^F =
+            let rhs = Map.fold (fun acc i p -> acc * mat.[i, p]) GenericZero (pi.ToMap())
+            if Permutation.sgn pi > 0 then
+                acc + rhs
+            else
+                acc - rhs
+        if not (isQuadratic mat) then
+            invalidArg "mat" "Matrix must be quadratic to compute its trace."
+        List.fold sum GenericZero (Permutation.all (rowCount mat))
+
+    /// Computes the determinant of given matrix using Laplace expansion.
     let inline determinant (mat: Matrix< ^F>) : ^F =
         let rec det (mat: Matrix< ^F>) : ^F =
             match rowCount mat with
@@ -207,6 +221,7 @@ module Matrix =
 
         det mat
 
+    // Computes the minor of a matrix element.
     let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
         // (-1)^(i + j) * det(complement mat i j)
         let det = determinant (complement mat i j)
@@ -214,25 +229,35 @@ module Matrix =
         then +det
         else -det
 
-    // Computes the minor of given element at position i,j in matrix mat.
-    //let inline minor mat i j =
-    //let inline minor (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
-    //    // (-1)^(i + j) * det(complement mat i j)
-    //    let det = determinant (complement mat i j)
-    //    match i + j % 2 with
-    //    | 0 -> +det
-    //    | _ -> -det
+    // Computes the cofactor of a given element this matrix.
+    let inline cofactorAt (mat: Matrix< ^G>) (i: int) (j: int) : ^G =
+        mat.[i, j] * (minor mat i j)
+
+    // Constructs a cofactor matrix, with each element to be the cofactor of the corresponding input matrix's element.
+    let inline cofactor (mat: Matrix< ^G>) : Matrix< ^G> =
+        init (rowCount mat) (columnCount mat) (cofactorAt mat)
+
+    // The adjugate matrix is the transpose of a cofactor matrix.
+    let inline adjugate (mat: Matrix< ^G>) : Matrix< ^G> =
+        transpose (cofactor mat)
+
+    // Constructs the inverse matrix using minor
+    let inline inverse (mat: Matrix< ^G>) : Matrix< ^G> =
+        let det = determinant mat
+        if det = GenericZero then
+            invalidArg "mat" "Matrix is not invertable"
+        (GenericOne / det) * (adjugate mat)
 
     //let inline rank (mat: Matrix< ^F>): ^F = () // TODO
 
     let inline foldElements (folder: (^T -> ^F -> ^T)) (init: ^T) (mat: Matrix< ^F>): ^T =
-        let allElements = 
+        let elements =
             seq {
                 for i = 1 to rowCount mat do
                     for j = 1 to columnCount mat do
                         yield mat.[i, j]
             }
-        Seq.fold folder init allElements
+        Seq.fold folder init elements
 
     let inline density (mat: Matrix< ^F>): float =
         let total = rowCount mat * columnCount mat

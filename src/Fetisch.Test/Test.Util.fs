@@ -13,6 +13,20 @@ open Fetisch
 open Fetisch.Util
 
 [<Fact>]
+let ``roman`` () =
+    Assert.Equal("I", roman 1)
+    Assert.Equal("II", roman 2)
+    Assert.Equal("III", roman 3)
+    Assert.Equal("IV", roman 4)
+    Assert.Equal("V", roman 5)
+    Assert.Equal("VI", roman 6)
+    Assert.Equal("VII", roman 7)
+    Assert.Equal("VIII", roman 8)
+    Assert.Equal("IX", roman 9)
+    Assert.Equal("X", roman 10)
+    Assert.Equal("XI", roman 11)
+
+[<Fact>]
 let ``isOne`` () =
     Assert.True(isOne 1)
     Assert.True(isOne 1N)

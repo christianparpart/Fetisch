@@ -42,14 +42,10 @@ module Util =
                        (900, "CM"); (500, "D"); (400, "CD"); (100, "C");
                        (90, "XC"); (50, "L"); (40, "XL"); (10, "X");
                        (9, "IX"); (5, "V"); (4, "IV"); (1, "I")]
+        // Returns the greatest key less than or equal to the given key,
+        // or null if there is no such key.
         let floorKey key =
-            // Returns the greatest key less than or equal to the given key,
-            // or null if there is no such key.
-            let mutable largest = 0
-            for KeyValue(k, _) in map do
-                if k <= key && k > largest then
-                    largest <- k
-            largest
+            Map.fold (fun acc k _ -> if k <= key && k > acc then k else acc) 0 map
         let l = floorKey n
         if l = n then
             map.[l]

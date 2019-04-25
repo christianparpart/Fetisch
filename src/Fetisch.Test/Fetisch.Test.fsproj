@@ -15,6 +15,7 @@
     <Compile Include="Test.LinearAlgebra.Matrix.fs" />
     <Compile Include="Test.SymbolicAlgebra.ExprMatcher.fs" />
     <Compile Include="Test.SymbolicAlgebra.Simplifier.fs" />
+    <Compile Include="Test.Symbolics.fs" />
   </ItemGroup>
 
   <ItemGroup>
