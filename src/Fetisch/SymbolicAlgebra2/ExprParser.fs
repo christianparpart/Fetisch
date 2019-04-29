@@ -84,10 +84,6 @@ module ExprParser =
                 let (e, tail) = parseExpr tokens.Tail
                 (e, consumeToken tail RndClose)
             | _ -> failwithf "Invalid Token: %A" tokens.Head
-        let tokens = tokenizeString s
-        let (res, rem) = parseExpr tokens
-        //match parseExpr(tokenizeString s) with
-        //| (expr, []) -> expr
-        //| _ -> failwithf "Unexpected trailing tokens: %A" token.Tail
-        res
-
+        match tokenizeString s |> parseExpr with
+        | (expr, []) -> expr
+        | (_, tokens) -> failwithf "Unexpected trailing tokens: %A" tokens.Head
