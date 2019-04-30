@@ -28,8 +28,10 @@ module ExprParser =
         let rec (|IsWhiteSpace|_|) = function
             | x::t when x = ' ' ->
                 match t with
-                | IsWhiteSpace st -> Some st
-                | _ -> Some t
+                | IsWhiteSpace (n, nt) ->
+                    Some (String.Concat(x, n), nt)
+                | _ ->
+                    Some ((sprintf "%c" x), t)
             | _ ->
                 None
         let rec (|IsNumber|_|) = function
@@ -38,14 +40,18 @@ module ExprParser =
                 | IsNumber (n, nt) ->
                     Some (String.Concat(x, n), nt)
                 | _ ->
-                    None
+                    Some ((sprintf "%c" x), t)
             | _ ->
                 None
         let rec tokenize (s: char list) : Token list =
             match s with
             | [] -> [Eof]
-            | IsWhiteSpace tail -> Whitespace :: (tokenize tail)
+            | IsWhiteSpace (_, tail) -> tokenize tail
             | IsNumber (num, tail) -> NumberLiteral(bigint.Parse(num)) :: (tokenize tail)
+            | '*' :: tail -> Mul :: (tokenize tail)
+            | '+' :: tail -> Plus :: (tokenize tail)
+            | '(' :: tail -> RndOpen :: (tokenize tail)
+            | ')' :: tail -> RndClose :: (tokenize tail)
             | _ -> [Illegal (String.Concat (Array.ofList s))]
         tokenize (Seq.toList s)
 
