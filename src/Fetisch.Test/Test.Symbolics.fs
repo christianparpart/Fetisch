@@ -43,12 +43,14 @@ let ``mul: constant folding`` () =
 
 [<Fact>]
 let ``expr tokenizer`` () =
-    let t = ExprParser.tokenizeString "2 * (3 + 4)"
-    Assert.Equal(Token.NumberLiteral(2I), List.item 0 t)
+    let t = ExprParser.tokenizeString "12 * (34 + 5)"
+    Assert.Equal(8, List.length t)
+    Assert.Equal(Token.NumberLiteral(12I), List.item 0 t)
     Assert.Equal(Token.Mul, List.item 1 t)
     Assert.Equal(Token.RndOpen, List.item 2 t)
-    Assert.Equal(Token.NumberLiteral(3I), List.item 3 t)
+    Assert.Equal(Token.NumberLiteral(34I), List.item 3 t)
     Assert.Equal(Token.Plus, List.item 4 t)
-    Assert.Equal(Token.NumberLiteral(4I), List.item 5 t)
+    Assert.Equal(Token.NumberLiteral(5I), List.item 5 t)
     Assert.Equal(Token.RndClose, List.item 6 t)
+    Assert.Equal(Token.Eof, List.item 7 t)
 
