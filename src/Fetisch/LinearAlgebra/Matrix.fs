@@ -180,7 +180,7 @@ module Matrix =
             else
                 acc - rhs
         if not (isQuadratic mat) then
-            invalidArg "mat" "Matrix must be quadratic to compute its trace."
+            invalidArg "mat" "Matrix must be quadratic."
         List.fold sum GenericZero (Permutation.all (rowCount mat))
 
     /// Computes the determinant of given matrix using Laplace expansion.
@@ -267,6 +267,9 @@ module Matrix =
     let inline sparsity (mat: Matrix< ^F>): float =
         1.0 - (density mat)
 
+    // -----------------------------------------------------------------------------------
+    // Elementary Matrix Operations
+
     let inline swapRow(mat: Matrix<_>) (a: int) (b: int) =
         init (rowCount mat) (columnCount mat)
              (fun i j -> match i with
@@ -300,6 +303,15 @@ module Matrix =
         init (rowCount mat) (columnCount mat)
              (fun i j -> if j = targetColumn then mat.[i, j] + scalar * mat.[i, column]
                          else mat.[i, j])
+
+    // -----------------------------------------------------------------------------------
+    // Solver
+
+    // TODO:
+    // - implement rank()
+    // - add API to retrieve all elementary matrices that can be multiplied in order to construct input matrix A.
+    // - extract API into its own Solver.fs
+    // - Rename Worker to System?
 
     type RowIndex = int
     type ColumnIndex = int
