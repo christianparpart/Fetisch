@@ -311,12 +311,11 @@ module Matrix =
     // - implement rank()
     // - add API to retrieve all elementary matrices that can be multiplied in order to construct input matrix A.
     // - extract API into its own Solver.fs
-    // - Rename Worker to System?
 
     type RowIndex = int
     type ColumnIndex = int
 
-    type Action< ^F> =
+    type Operation< ^F> =
         | SwapRow of a: RowIndex * b: RowIndex
         | ScaleRow of row: RowIndex * scalar: ^F
         | AddScaledRow of targetRow: RowIndex * scalar: ^F * row: RowIndex
@@ -325,8 +324,8 @@ module Matrix =
         | AddScaledColumn of targetColumn: ColumnIndex * scalar: ^F * column: ColumnIndex
 
     // Applies a single elementary matrix transformation.
-    let inline applyAction (mat: Matrix< ^F>) (action: Action< ^F>) : Matrix< ^F> =
-        match action with
+    let inline applyOperation (mat: Matrix< ^F>) (operation: Operation< ^F>) : Matrix< ^F> =
+        match operation with
         | SwapRow(a, b) -> swapRow mat a b
         | ScaleRow(row, scalar) -> scaleRow mat row scalar
         | AddScaledRow(targetRow, scalar, row) -> addScaledRow mat targetRow scalar row
@@ -335,27 +334,27 @@ module Matrix =
         | AddScaledColumn(targetColumn, scalar, column) -> addScaledColumn mat targetColumn scalar column
 
     type Step< ^F when ^F : equality> = {
-        Action : Action< ^F>
+        Operation : Operation< ^F>
         Matrix : Matrix< ^F>
     }
 
-    type Worker< ^F when ^F : equality> =
-        | InlineWorker of matrix: Matrix< ^F>
-        | IterativeWorker of Tip: Matrix< ^F> * Steps: Step< ^F> list
+    type State< ^F when ^F : equality> =
+        | InlineState of matrix: Matrix< ^F>
+        | IterativeState of Tip: Matrix< ^F> * Steps: Step< ^F> list
 
-    let inline workMatrix (handler: Worker< ^F>) : Matrix< ^F> =
+    let inline matrixState (handler: State< ^F>) : Matrix< ^F> =
         match handler with
-        | InlineWorker(m) -> m
-        | IterativeWorker(tip, _) -> tip
+        | InlineState(m) -> m
+        | IterativeState(tip, _) -> tip
 
-    let inline updateWork (action: Action< ^F>) (work: Worker< ^F>) : Worker< ^F> =
+    let inline updateState (operation: Operation< ^F>) (work: State< ^F>) : State< ^F> =
         match work with
-        | InlineWorker (mat) ->
-            InlineWorker(applyAction mat action)
-        | IterativeWorker (mat, steps) ->
-            let mat' = applyAction mat action
-            let step = { Action = action; Matrix = mat' }
-            IterativeWorker(mat', steps @ [step])
+        | InlineState (mat) ->
+            InlineState(applyOperation mat operation)
+        | IterativeState (mat, steps) ->
+            let mat' = applyOperation mat operation
+            let step = { Operation = operation; Matrix = mat' }
+            IterativeState(mat', steps @ [step])
 
     // find smallest index k with m_{k}{l} being the smallest value in column l that is not 0.
     let inline findSmallestAtColumnFor (mat: Matrix< ^F>) (i0: int) (j: int) : Option<int> =
@@ -375,69 +374,53 @@ module Matrix =
                     None
         Array.fold finder None [| i0 .. rowCount mat |]
 
-    let inline findNonZeroAtColumnFor (mat: Matrix< ^F>) (i0: int) (j: int) : Option<int> =
-        match Array.tryFindIndex (fun i -> isNotZero mat.[i, j]) [| i0 .. rowCount mat |] with
-        | Some i -> Some (i0 + i)
-        | None -> None
-
-    let inline ensureValueOneAt (worker: Worker< ^F>) (i: int) (j: int) : Worker< ^F> =
-        let mat = workMatrix worker
+    let inline private ensureValueOneAt (state: State< ^F>) (i: int) (j: int) : State< ^F> =
+        let mat = matrixState state
         if mat.[i, j] = GenericOne then
-            worker
+            state
         else
             match findSmallestAtColumnFor mat i j with
             | Some k when k <> i ->
                 if mat.[k, j] <> GenericOne then
-                    worker
-                    |> updateWork (SwapRow(i, k))
-                    |> updateWork (ScaleRow(i, multiplicativeInverse mat.[k, j]))
+                    state
+                    |> updateState (SwapRow(i, k))
+                    |> updateState (ScaleRow(i, multiplicativeInverse mat.[k, j]))
                 else
-                    worker
-                    |> updateWork (SwapRow(i, k))
+                    state
+                    |> updateState (SwapRow(i, k))
             | Some k ->
                 if mat.[k, j] <> GenericOne then
-                    worker
-                    |> updateWork (ScaleRow(i, multiplicativeInverse mat.[k, j]))
+                    state
+                    |> updateState (ScaleRow(i, multiplicativeInverse mat.[k, j]))
                 else
-                    worker
+                    state
             | None ->
-                worker
-
-    let inline ensureNonZeroValueAt (worker: Worker< ^F>) (i: int) (j: int) : Worker< ^F> =
-        let mat = workMatrix worker
-        if mat.[i, j] = GenericOne then
-            worker
-        else
-            match findNonZeroAtColumnFor mat i j with
-            | Some k when k <> i ->
-                worker |> updateWork (SwapRow(i, k))
-            | _ ->
-                worker
+                state
 
     // Tests whether or not given row in given matrix only contains zeros.
-    let inline isNonNullRow (mat: Matrix< ^F>) (i: int) : bool =
+    let inline private isNonNullRow (mat: Matrix< ^F>) (i: int) : bool =
         Array.exists (fun v -> isNotZero v) (mat.Row(i).Values)
 
-    let inline makeZerosAbove (i: int) (j: int) (work: Worker< ^F>) : Worker< ^F> =
-        let rec makeZero (k: int) (work: Worker< ^F>) : Worker< ^F> =
+    let inline private makeZerosAbove (i: int) (j: int) (work: State< ^F>) : State< ^F> =
+        let rec makeZero (k: int) (work: State< ^F>) : State< ^F> =
             match k >= 1 with
             | false ->
                 work
             | true ->
-                let mat = workMatrix work
+                let mat = matrixState work
                 match mat.[k, j] <> GenericZero && (isNonNullRow mat k) with
                 | true ->
                     work
-                    |> updateWork (AddScaledRow(k, -mat.[k, j], i))
+                    |> updateState (AddScaledRow(k, -mat.[k, j], i))
                     |> makeZero (k - 1)
                 | false ->
                     makeZero (k - 1) work
         makeZero (i - 1) work
 
     // Set all numbers to zero that are in mat[i..m, j].
-    let inline makeZerosBelow (i: int) (j: int) (work: Worker< ^F>) : Worker< ^F> =
-        let rec makeZero (k: int) (work: Worker< ^F>) : Worker< ^F> =
-            let mat = workMatrix work
+    let inline private makeZerosBelow (i: int) (j: int) (work: State< ^F>) : State< ^F> =
+        let rec makeZero (k: int) (work: State< ^F>) : State< ^F> =
+            let mat = matrixState work
             match k <= rowCount mat with
             | false ->
                 work
@@ -445,15 +428,29 @@ module Matrix =
                 match mat.[k, j] <> GenericZero && (isNonNullRow mat k) with
                 | true ->
                     work
-                    |> updateWork (AddScaledRow(k, -(mat.[k, j] / mat.[i, j]), i))
+                    |> updateState (AddScaledRow(k, -(mat.[k, j] / mat.[i, j]), i))
                     |> makeZero (k + 1)
                 | false ->
                     makeZero (k + 1) work
         makeZero (i + 1) work
 
-    let inline private rowEchelonStep (d: int) (work: Worker< ^F>) : Worker< ^F> =
-        let rec step (d: int) (work: Worker< ^F>) : Worker< ^F> =
-            let mat = workMatrix work
+    let inline private rowEchelonStep (d: int) (work: State< ^F>) : State< ^F> =
+        let rec step (d: int) (work: State< ^F>) : State< ^F> =
+            let inline ensureNonZeroValueAt (state: State< ^F>) (i: int) (j: int) : State< ^F> =
+                let inline findNonZeroAtColumnFor (mat: Matrix< ^F>) (i0: int) (j: int) : Option<int> =
+                    match Array.tryFindIndex (fun i -> isNotZero mat.[i, j]) [| i0 .. rowCount mat |] with
+                    | Some i -> Some (i0 + i)
+                    | None -> None
+                let mat = matrixState state
+                if mat.[i, j] = GenericOne then
+                    state
+                else
+                    match findNonZeroAtColumnFor mat i j with
+                    | Some k when k <> i ->
+                        state |> updateState (SwapRow(i, k))
+                    | _ ->
+                        state
+            let mat = matrixState work
             if d > min (rowCount mat) (columnCount mat) then
                 work
             else
@@ -464,13 +461,13 @@ module Matrix =
 
     // Transforms given matrix into row echelon form, preserving each step.
     let inline rowEchelonFormIterative (mat: Matrix< ^F>) : Step< ^F> list =
-        match rowEchelonStep 1 (IterativeWorker(mat, [])) with
-        | IterativeWorker(tip, steps) -> steps
+        match rowEchelonStep 1 (IterativeState(mat, [])) with
+        | IterativeState(tip, steps) -> steps
         | _ -> invalidOp "The impossible is happening."
 
-    let inline private rowCanonicalStep (d: int) (work: Worker< ^F>) : Worker< ^F> =
-        let rec step (d: int) (work: Worker< ^F>) : Worker< ^F> =
-            let mat = workMatrix work
+    let inline private rowCanonicalStep (d: int) (work: State< ^F>) : State< ^F> =
+        let rec step (d: int) (work: State< ^F>) : State< ^F> =
+            let mat = matrixState work
             if d > min (rowCount mat) (columnCount mat) then
                 work
             else
@@ -482,8 +479,8 @@ module Matrix =
 
     // Transforms given matrix to row canonical form, preserving each step.
     let inline rowCanonicalFormIterative (mat: Matrix< ^F>) : Step< ^F> list =
-        match rowCanonicalStep 1 (IterativeWorker(mat, [])) with
-        | IterativeWorker(tip, steps) -> steps
+        match rowCanonicalStep 1 (IterativeState(mat, [])) with
+        | IterativeState(tip, steps) -> steps
         | _ -> invalidOp "The impossible is happening."
 
     // Transforms given matrix to row echelon form.
@@ -492,8 +489,8 @@ module Matrix =
 
     // Transforms given matrix to row canonical form.
     let inline rowCanonicalForm (mat: Matrix< ^F>) : Matrix< ^F> =
-        match rowCanonicalStep 1 (InlineWorker(mat)) with
-        | InlineWorker(mat) -> mat
+        match rowCanonicalStep 1 (InlineState(mat)) with
+        | InlineState(mat) -> mat
         | _ -> invalidOp "The impossible is happening."
 
     let inline solve (mat: Matrix< ^F>) (b: Vector< ^F>) : Vector< ^F> =
@@ -514,7 +511,7 @@ module Matrix =
             acc + " " + (Array.fold mkCol "" [| 1 .. columnCount mat |]) + "\n"
         Array.fold mkRow "" [| 1 .. rowCount mat |]
 
-    let inline formatAction (action: Action< ^F>) : string =
+    let inline formatOperation (operation: Operation< ^F>) : string =
         let abs num =
             match num with
             | num when num < (num - num) -> -num
@@ -523,7 +520,7 @@ module Matrix =
             match num with
             | n when n < (num - num) -> "-"
             | _ -> "+"
-        match action with
+        match operation with
         | SwapRow(a, b) -> (sprintf "Swap row %s with %s" (roman a) (roman b))
         | ScaleRow(row, scalar) -> (sprintf "Scale row %s by %s" (roman row) (scalar.ToString()))
         | AddScaledRow(targetRow, scalar, row) ->
@@ -541,7 +538,7 @@ module Matrix =
             | [] ->
                 ""
             | head :: tail ->
-                let act = sprintf "%d.) %s\n\n" n (formatAction (head.Action))
+                let act = sprintf "%d.) %s\n\n" n (formatOperation (head.Operation))
                 let mat = formatMatrix (head.Matrix)
                 let next = formatStep tail (n + 1)
                 act + mat + "\n" + next
