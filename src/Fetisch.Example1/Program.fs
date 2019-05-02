@@ -28,15 +28,15 @@ let misc () =
                            [   λ; 1G; -1G;   0G];
                            [2G*λ; 0G;  2G;   1G]];
 
-    //printfn "%s" (Matrix.formatMatrix a)
+    //printfn "%s" (TextFormatter.formatMatrix a)
 
-    //let b = Matrix.rowCanonicalForm(a)
-    //printfn "%s" (Matrix.formatMatrix b)
+    //let b = Solver.rowCanonicalForm(a)
+    //printfn "%s" (TextFormatter.formatMatrix b)
 
     // XXX for automatic simplification I could create a SimplifiedSymbolicAlgebra
     // or WrappedAlgebra< ^F> that would auto-simplify upon each operation.
     //let b' = Matrix.map b Simplifier.simplify
-    //printfn "%s" (Matrix.formatMatrix b')
+    //printfn "%s" (TextFormatter.formatMatrix b')
 
     let d = Matrix.determinant a
     printfn "det(A) = %A" d
@@ -46,13 +46,16 @@ let misc () =
     //                        [3; 0; 0;  5];
     //                        [2; 2; 4; -3];
     //                        [1; 0; 5;  0]];
-    //printfn "%s" (Matrix.formatMatrix a)
+    //printfn "%s" (TextFormatter.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
 
 [<EntryPoint>]
 let main argv =
+    let t = Fetisch.Experimental.Symbolics.ExprParser.tokenizeString "12 * (3 + 4)"
+    printfn "t: %A" t
+
     Experimental.Symbolics.Test.main()
 
-    Console.ReadKey() |> ignore
+    //Console.ReadKey() |> ignore
     0
 
