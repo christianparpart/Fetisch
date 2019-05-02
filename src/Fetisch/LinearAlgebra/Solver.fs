@@ -7,7 +7,6 @@
 
 namespace Fetisch.LinearAlgebra
 
-open Fetisch.Algebra
 open Fetisch.Util
 
 open FSharp.Core.LanguagePrimitives
@@ -15,7 +14,6 @@ open FSharp.Core.LanguagePrimitives
 // TODO: add solveIterative(A, b)
 
 module Solver =
-    open Fetisch // BigRational
     open Matrix
 
     // -----------------------------------------------------------------------------------

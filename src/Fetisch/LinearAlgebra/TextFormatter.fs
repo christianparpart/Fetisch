@@ -1,4 +1,11 @@
-﻿namespace Fetisch.LinearAlgebra
+﻿// This file is part of the "Fetisch" project, http://github.com/christianparpart/Fetisch>
+//   (c) 2009-2018 Christian Parpart <christian@parpart.family>
+//
+// Licensed under the MIT License (the "License"); you may not use this
+// file except in compliance with the License. You may obtain a copy of
+// the License at: http://opensource.org/licenses/MIT
+
+namespace Fetisch.LinearAlgebra
 
 module TextFormatter =
     open Matrix
