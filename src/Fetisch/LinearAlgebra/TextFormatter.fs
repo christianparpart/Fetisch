@@ -25,7 +25,7 @@ module TextFormatter =
             acc + " " + (Array.fold mkCol "" [| 1 .. columnCount mat |]) + "\n"
         Array.fold mkRow "" [| 1 .. rowCount mat |]
 
-    let inline formatOperation (operation: Operation< ^F>) : string =
+    let inline formatOperation (operation: ElementaryOperation<_>) : string =
         let abs num =
             match num with
             | num when num < (num - num) -> -num
@@ -46,7 +46,7 @@ module TextFormatter =
         | ScaleColumn(a, scalar) -> (sprintf "Scale column %d by %s" a (scalar.ToString()))
         | AddScaledColumn(targetColumn, scalar, column) -> (sprintf "Column %d = %s * %d" targetColumn (scalar.ToString()) column)
 
-    let inline formatSteps(steps: Step< ^F> list) : string =
+    let inline formatSteps(steps: Step<_> list) : string =
         let rec formatStep list n =
             match list with
             | [] ->

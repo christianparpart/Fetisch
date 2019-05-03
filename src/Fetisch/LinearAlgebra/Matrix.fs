@@ -19,13 +19,27 @@ open Fetisch.Util
 
 open FSharp.Core.LanguagePrimitives
 
+type RowIndex = int
+type ColumnIndex = int
+
+type ElementaryOperation< ^G when ^G : equality
+                              and ^G : (static member ( * ): ^G * ^G -> ^G)
+                              and ^G : (static member ( + ): ^G * ^G -> ^G)
+                        > =
+    | SwapRow of a: RowIndex * b: RowIndex
+    | ScaleRow of row: RowIndex * scalar: ^G
+    | AddScaledRow of targetRow: RowIndex * scalar: ^G * row: RowIndex
+    | SwapColumn of a: RowIndex * b: RowIndex
+    | ScaleColumn of a: ColumnIndex * scalar: ^G
+    | AddScaledColumn of targetColumn: ColumnIndex * scalar: ^G * column: ColumnIndex
+
 type Matrix<'F when 'F : equality> (values: 'F [,]) =
     member val Values = values
 
     member inline private this.RowCount = Array2D.length1 this.Values
     member inline private this.ColumnCount = Array2D.length2 this.Values
 
-    member inline this.Item with get (i: int, j: int) = this.Values.[i - 1, j - 1]
+    member inline this.Item with get (i: int, j: int): 'F = this.Values.[i - 1, j - 1]
     member inline this.Row with get (i: int) = Vector.init (this.ColumnCount) (fun j -> this.[i, j])
     member inline this.Column with get (j: int) = Vector.init (this.RowCount) (fun i -> this.[i, j])
 
@@ -98,6 +112,40 @@ type Matrix<'F when 'F : equality> (values: 'F [,]) =
     // Scalar * Matrix multiplication
     static member inline ( * ) (mat: Matrix< ^G>, scalar: ^G) : Matrix< ^G> =
         Matrix< ^G>.Init (mat.RowCount) (mat.ColumnCount) (fun i j -> scalar * mat.[i, j])
+
+    // Applies a single elementary matrix transformation.
+    static member inline ( * ) (op: ElementaryOperation< ^G>, mat: Matrix< ^G>): Matrix< ^G> =
+        let m = Array2D.length1 (mat.Values)
+        let n = Array2D.length2 (mat.Values)
+        match op with
+        | SwapRow(a, b) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> match i with
+                                | row when row = a -> mat.[b, j]
+                                | row when row = b -> mat.[a, j]
+                                | _ -> mat.[i, j])
+        | ScaleRow(row, scalar) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> if i = row then mat.[i, j] * scalar
+                                else mat.[i, j])
+        | AddScaledRow(targetRow, scalar, row) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> if i = targetRow then scalar * mat.[row, j] + mat.[i, j]
+                                else mat.[i, j])
+        | SwapColumn(a, b) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> match j with
+                                | col when col = a -> mat.[i, b]
+                                | col when col = b -> mat.[i, a]
+                                | _ -> mat.[i, j])
+        | ScaleColumn(column, scalar) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> if j = column then scalar * mat.[i, j]
+                                else mat.[i, j])
+        | AddScaledColumn(targetColumn, scalar, column) ->
+            Matrix< ^G>.Init m n
+                    (fun i j -> if j = targetColumn then mat.[i, j] + scalar * mat.[i, column]
+                                else mat.[i, j])
 
 //type SparseMatrix(items) =
 //    do printfn "TODO"

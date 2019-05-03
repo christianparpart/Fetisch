@@ -53,33 +53,18 @@ module Solver =
              (fun i j -> if j = targetColumn then mat.[i, j] + scalar * mat.[i, column]
                          else mat.[i, j])
 
-    type RowIndex = int
-    type ColumnIndex = int
-
-    type Operation< ^F> =
-        | SwapRow of a: RowIndex * b: RowIndex
-        | ScaleRow of row: RowIndex * scalar: ^F
-        | AddScaledRow of targetRow: RowIndex * scalar: ^F * row: RowIndex
-        | SwapColumn of a: RowIndex * b: RowIndex
-        | ScaleColumn of a: ColumnIndex * scalar: ^F
-        | AddScaledColumn of targetColumn: ColumnIndex * scalar: ^F * column: ColumnIndex
-
-    // Applies a single elementary matrix transformation.
-    let inline applyOperation (mat: Matrix< ^F>) (operation: Operation< ^F>) : Matrix< ^F> =
-        match operation with
-        | SwapRow(a, b) -> swapRow mat a b
-        | ScaleRow(row, scalar) -> scaleRow mat row scalar
-        | AddScaledRow(targetRow, scalar, row) -> addScaledRow mat targetRow scalar row
-        | SwapColumn(a, b) -> swapColumn mat a b
-        | ScaleColumn(column, scalar) -> scaleColumn mat column scalar
-        | AddScaledColumn(targetColumn, scalar, column) -> addScaledColumn mat targetColumn scalar column
-
-    type Step< ^F when ^F : equality> = {
-        Operation : Operation< ^F>
+    type Step< ^F when ^F : equality
+                   and ^F : (static member ( * ): ^F * ^F -> ^F)
+                   and ^F : (static member ( + ): ^F * ^F -> ^F)
+             > = {
+        Operation : ElementaryOperation< ^F>
         Matrix : Matrix< ^F>
     }
 
-    type State< ^F when ^F : equality> =
+    type State< ^F when ^F : equality
+                    and ^F : (static member ( * ): ^F * ^F -> ^F)
+                    and ^F : (static member ( + ): ^F * ^F -> ^F)
+              > =
         | InlineState of matrix: Matrix< ^F>
         | IterativeState of Tip: Matrix< ^F> * Steps: Step< ^F> list
 
@@ -88,12 +73,12 @@ module Solver =
         | InlineState(m) -> m
         | IterativeState(tip, _) -> tip
 
-    let inline updateState (operation: Operation< ^F>) (work: State< ^F>) : State< ^F> =
+    let inline updateState (operation: ElementaryOperation< ^F>) (work: State< ^F>) : State< ^F> =
         match work with
         | InlineState (mat) ->
-            InlineState(applyOperation mat operation)
+            InlineState(operation * mat)
         | IterativeState (mat, steps) ->
-            let mat' = applyOperation mat operation
+            let mat' = operation * mat
             let step = { Operation = operation; Matrix = mat' }
             IterativeState(mat', steps @ [step])
 
