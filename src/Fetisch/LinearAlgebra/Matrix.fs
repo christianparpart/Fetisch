@@ -18,21 +18,22 @@ open Fetisch.Algebra
 open Fetisch.Util
 
 open FSharp.Core.LanguagePrimitives
+open System.Diagnostics
 
 type RowIndex = int
 type ColumnIndex = int
 
-type ElementaryOperation< ^G when ^G : equality
-                              and ^G : (static member ( * ): ^G * ^G -> ^G)
-                              and ^G : (static member ( + ): ^G * ^G -> ^G)
-                        > =
+type ElementaryOperation< ^F when ^F : (static member ( * ): ^F * ^F -> ^F)
+                              and ^F : (static member ( + ): ^F * ^F -> ^F)> =
     | SwapRow of a: RowIndex * b: RowIndex
-    | ScaleRow of row: RowIndex * scalar: ^G
-    | AddScaledRow of targetRow: RowIndex * scalar: ^G * row: RowIndex
+    | ScaleRow of row: RowIndex * scalar: ^F
+    | AddScaledRow of targetRow: RowIndex * scalar: ^F * row: RowIndex
     | SwapColumn of a: RowIndex * b: RowIndex
-    | ScaleColumn of a: ColumnIndex * scalar: ^G
-    | AddScaledColumn of targetColumn: ColumnIndex * scalar: ^G * column: ColumnIndex
+    | ScaleColumn of a: ColumnIndex * scalar: ^F
+    | AddScaledColumn of targetColumn: ColumnIndex * scalar: ^F * column: ColumnIndex
 
+[<DebuggerDisplay("{AsString()}")>]
+[<StructuredFormatDisplay("{AsString()}")>]
 type Matrix<'F when 'F : equality> (values: 'F [,]) =
     member val Values = values
 
@@ -46,13 +47,16 @@ type Matrix<'F when 'F : equality> (values: 'F [,]) =
     static member inline Init (m: int) (n: int) (init: int -> int -> ^F) =
         Matrix(Array2D.init m n (fun i j -> init (i + 1) (j + 1)))
 
-    override mat.ToString() =
+    member inline mat.AsString() =
         let mkRow acc i =
             let width = 1
-            let mkCol acc j = acc + (sprintf " %*s" width (mat.[i, j].ToString()))
+            let mkCol acc j =
+                let sep = if j > 1 then ", " else ""
+                acc + (sprintf "%s%*s" sep width (mat.[i, j].ToString()))
             let sep = if i > 1 then ", " else ""
             acc + sep + "{" + (Array.fold mkCol "" [| 1 .. mat.ColumnCount |]) + "}"
-        Array.fold mkRow "" [| 1 .. mat.RowCount |]
+        let rows = Array.fold mkRow "" [| 1 .. mat.RowCount |]
+        "{" + rows + "}"
 
     member inline this.Slice(row, column, m, n) =
         Matrix< ^F>.Init m n (fun i j -> this.Values.[row + i - 2, column + j - 2])
