@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -13,10 +13,13 @@
     <Compile Include="Test.ModNum.fs" />
     <Compile Include="Test.LinearAlgebra.Vector.fs" />
     <Compile Include="Test.LinearAlgebra.Matrix.fs" />
+    <None Include="Test.LinearAlgebra.Solver.fs" />
     <Compile Include="Test.SymbolicAlgebra.ExprMatcher.fs" />
     <Compile Include="Test.SymbolicAlgebra.Simplifier.fs" />
     <Compile Include="Test.Symbolics.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
