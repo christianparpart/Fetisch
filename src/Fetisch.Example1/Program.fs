@@ -49,13 +49,33 @@ let misc () =
     //printfn "%s" (TextFormatter.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
 
+let g () =
+    let A = Matrix.createQ [[1; 2; 3]; [0; 1; 4]; [5; 6; 0]];
+    printfn "     A = %s" (A.AsString())
+
+    let I = Matrix.init 3 3 (fun i j -> if i = j then 1N else 0N)
+    printfn "     I = %s" (I.AsString())
+
+    let C = Solver.decompose A
+    List.iteri (fun (i: int) (c: Matrix<BigRational>) -> printfn "   C_%d = %s" (1 + i) (c.AsString())) C
+
+    let inline mul (a: Matrix<BigRational>) (b: Matrix<BigRational>): Matrix<BigRational> = a * b
+    let A' = List.fold (*) I C
+    printfn "    A' = %s = C_0 * ... * C_%d" (A'.AsString()) (List.length C)
+
+    // FIXME: why's that not compiling (SRTP FU)
+    //let A2' = Matrix.inverse A
+    //printfn "    A''= %s" (A2'.AsString())
+
+    let A_times_A' = A * A'
+    printfn "A * A' = %s" (A_times_A'.AsString())
+
 [<EntryPoint>]
 let main argv =
-    let t = Fetisch.Experimental.Symbolics.ExprParser.tokenizeString "12 * (3 + 4)"
-    printfn "t: %A" t
-
-    Experimental.Symbolics.Test.main()
-
+    g()
+    //let t = Fetisch.Experimental.Symbolics.ExprParser.tokenizeString "12 * (3 + 4)"
+    //printfn "t: %A" t
+    //Experimental.Symbolics.Test.main()
     //Console.ReadKey() |> ignore
     0
 
