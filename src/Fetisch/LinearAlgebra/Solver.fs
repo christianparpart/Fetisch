@@ -61,6 +61,14 @@ module Solver =
         Matrix : Matrix< ^F>
     }
 
+    // Extracts the list of elementary operations.
+    let inline elementaryOperations (steps: Step< ^F> list): ElementaryOperation< ^F> list =
+        let rec getOps (steps: Step< ^F> list) (ops: ElementaryOperation< ^F> list): ElementaryOperation< ^F> list =
+            match steps with
+            | [] -> ops
+            | s :: xs -> s.Operation :: (getOps xs ops)
+        getOps steps []
+
     type State< ^F when ^F : equality
                     and ^F : (static member ( * ): ^F * ^F -> ^F)
                     and ^F : (static member ( + ): ^F * ^F -> ^F)
@@ -185,7 +193,7 @@ module Solver =
                 |> step (d + 1)
         step d work
 
-    // Transforms given matrix into row echelon form, preserving each step.
+    /// Transforms given matrix into row echelon form, preserving each step.
     let inline rowEchelonFormIterative (mat: Matrix< ^F>) : Step< ^F> list =
         match rowEchelonStep 1 (IterativeState(mat, [])) with
         | IterativeState(tip, steps) -> steps
@@ -203,13 +211,13 @@ module Solver =
                 |> step (d + 1)
         step d work
 
-    // Transforms given matrix to row canonical form, preserving each step.
+    /// Transforms given matrix to row canonical form, preserving each step.
     let inline rowCanonicalFormIterative (mat: Matrix< ^F>) : Step< ^F> list =
         match rowCanonicalStep 1 (IterativeState(mat, [])) with
         | IterativeState(tip, steps) -> steps
         | _ -> invalidOp "The impossible is happening."
 
-    // Transforms given matrix to row echelon form.
+    /// Transforms given matrix to row echelon form.
     let inline rowEchelonForm (mat: Matrix< ^F>) : Matrix< ^F> =
         (List.last (rowEchelonFormIterative mat)).Matrix
 
@@ -219,9 +227,48 @@ module Solver =
         | InlineState(mat) -> mat
         | _ -> invalidOp "The impossible is happening."
 
-    // Solves linear system of equations: Ax=b. Reveives A and b, returns x.
+    /// Solves linear system of equations: Ax=b. Reveives A and b, returns x.
     let inline solve (mat: Matrix< ^F>) (b: Vector< ^F>) : Vector< ^F> =
         let m_ext = mat +|+ b
         let m' = rowCanonicalForm m_ext
         m'.Column (columnCount m')
 
+    /// Constructs a left-multiplyable m*m elementary matrix equivalent to the given elementary operation.
+    let inline elementaryMatrix (m: int) (op: ElementaryOperation< ^F>): Matrix< ^F> =
+        let kroneckerDelta (i: int) (j: int): ^F =
+            if i = j then GenericOne
+            else GenericZero
+        match op with
+        | SwapRow(a, b) ->
+            let init i j =
+                if i = a then kroneckerDelta b j
+                elif i = b then kroneckerDelta a j
+                else kroneckerDelta i j
+            Matrix.init m m init
+        | AddScaledColumn(targetRow, scalar, row) ->
+            let init i j =
+                if i = targetRow && j = row then scalar * kroneckerDelta j j
+                else kroneckerDelta i j
+            Matrix.init m m init
+        | ScaleRow(row, scalar) ->
+            let init i j =
+                if i = row then scalar * kroneckerDelta i j
+                else kroneckerDelta i j
+            Matrix.init m m init
+        | _ -> failwith "TODO: Elementary (column-based) operations not yet implemented."
+
+    /// Constructs a list of elementary m*m matrices for given elementary operations.
+    let inline elementaryMatrices (m: int) (ops: ElementaryOperation< ^F> list): Matrix< ^F> list =
+        let folder (mats: Matrix< ^F> list) (op: ElementaryOperation< ^F>): Matrix< ^F> list =
+            let e = elementaryMatrix m op
+            e :: mats
+        List.fold folder [] ops
+
+    /// Constructs a list of elementary m*m matrices whos product constructs the given input matrix.        
+    ///
+    /// The matrix must be regular (invertible) in order to be elementary matrix constructible.
+    let inline elementaryProducts (mat: Matrix< ^F>): Matrix< ^F> list =
+        let steps = rowCanonicalFormIterative mat
+        let ops = elementaryOperations steps
+        let C = elementaryMatrices (Matrix.rowCount mat) ops
+        C
