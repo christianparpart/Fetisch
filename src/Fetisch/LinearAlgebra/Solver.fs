@@ -245,7 +245,7 @@ module Solver =
                 elif i = b then kroneckerDelta a j
                 else kroneckerDelta i j
             Matrix.init m m init
-        | AddScaledColumn(targetRow, scalar, row) ->
+        | AddScaledRow(targetRow, scalar, row) ->
             let init i j =
                 if i = targetRow && j = row then scalar * kroneckerDelta j j
                 else kroneckerDelta i j
@@ -255,7 +255,12 @@ module Solver =
                 if i = row then scalar * kroneckerDelta i j
                 else kroneckerDelta i j
             Matrix.init m m init
-        | _ -> failwith "TODO: Elementary (column-based) operations not yet implemented."
+        | SwapColumn(a, b) ->
+            failwith "TODO: Elementary operation SwapColumn not yet implemented."
+        | AddScaledColumn(targetColumn, scalar, column) ->
+            failwith "TODO: Elementary operation AddScaledColumn not yet implemented."
+        | ScaleColumn(column, scalar) ->
+            failwith "TODO: Elementary operation ScaleColumn not yet implemented."
 
     /// Constructs a list of elementary m*m matrices for given elementary operations.
     let inline elementaryMatrices (m: int) (ops: ElementaryOperation< ^F> list): Matrix< ^F> list =
@@ -267,8 +272,29 @@ module Solver =
     /// Constructs a list of elementary m*m matrices whos product constructs the given input matrix.        
     ///
     /// The matrix must be regular (invertible) in order to be elementary matrix constructible.
-    let inline elementaryProducts (mat: Matrix< ^F>): Matrix< ^F> list =
+    let inline decompose (mat: Matrix< ^F>): Matrix< ^F> list =
+        let m = Matrix.rowCount mat
+        if not (Matrix.isQuadratic mat) then
+            failwithf "Matrix must be square (and regular) but is a %dx%d matrix." m m
+        let I =
+            let init (i: int) (j: int): ^F =
+                if i = j then GenericOne
+                else GenericZero
+            Matrix.init m m init
         let steps = rowCanonicalFormIterative mat
         let ops = elementaryOperations steps
         let C = elementaryMatrices (Matrix.rowCount mat) ops
         C
+
+    // FIXME: I cannot multiply two matrices in this function? (op_Multiply not found)
+    //let inline inverse (mat: Matrix< ^F>): Matrix< ^F> =
+    //    let m = Matrix.rowCount mat
+    //    let I =
+    //        let init (i: int) (j: int): ^F =
+    //            if i = j then GenericOne
+    //            else GenericZero
+    //        Matrix.init m m init
+    //    let steps = rowCanonicalFormIterative mat
+    //    let ops = elementaryOperations steps
+    //    let C : Matrix< ^F> list = elementaryMatrices (Matrix.rowCount mat) ops
+    //    List.fold (*) I C
