@@ -56,6 +56,7 @@ module Solver =
     type Step< ^F when ^F : equality
                    and ^F : (static member ( * ): ^F * ^F -> ^F)
                    and ^F : (static member ( + ): ^F * ^F -> ^F)
+                   and ^F : (static member One: ^F)
              > = {
         Operation : ElementaryOperation< ^F>
         Matrix : Matrix< ^F>
@@ -72,6 +73,7 @@ module Solver =
     type State< ^F when ^F : equality
                     and ^F : (static member ( * ): ^F * ^F -> ^F)
                     and ^F : (static member ( + ): ^F * ^F -> ^F)
+                    and ^F : (static member One: ^F)
               > =
         | InlineState of matrix: Matrix< ^F>
         | IterativeState of Tip: Matrix< ^F> * Steps: Step< ^F> list
