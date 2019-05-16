@@ -49,7 +49,7 @@ let misc () =
     //printfn "%s" (TextFormatter.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
 
-let g () =
+let elementary_matrix_decomposition () =
     let A = Matrix.createQ [[1; 2; 3]; [0; 1; 4]; [5; 6; 0]];
     printfn "     A = %s" (A.AsString())
 
@@ -72,7 +72,7 @@ let g () =
 
 [<EntryPoint>]
 let main argv =
-    g()
+    elementary_matrix_decomposition()
     //let t = Fetisch.Experimental.Symbolics.ExprParser.tokenizeString "12 * (3 + 4)"
     //printfn "t: %A" t
     //Experimental.Symbolics.Test.main()
