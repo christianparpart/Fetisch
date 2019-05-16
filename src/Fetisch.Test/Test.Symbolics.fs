@@ -13,14 +13,16 @@ open Fetisch.Experimental.Symbolics.Operations
 
 let a, b, c = var "a", var "b", var "c"
 
+let e2s (e: Expression): string =
+    e.ToString()
+
 [<Fact>]
 let ``add: constant folding`` () =
-    Assert.Equal("5", (2G + 3G).ToString())
-
-    Assert.Equal("9", (2G + (3G + 4G)).ToString())
-    Assert.Equal("9", ((2G + 3G) + 4G).ToString())
-
-    Assert.Equal("6 + a", ((2G + a) + 4G).ToString())
+    Assert.Equal("5", e2s (2G + 3G))
+    Assert.Equal("9", e2s (2G + (3G + 4G)))
+    Assert.Equal("9", e2s ((2G + 3G) + 4G))
+    Assert.Equal("6 + a", e2s ((2G + a) + 4G))
+    Assert.Equal("6 + a", e2s (2G + (a + 4G)))
 
 [<Fact>]
 let ``add: var`` () =
@@ -38,8 +40,22 @@ let ``add: inverse element`` () =
     Assert.Equal("0", ((-a) + a).ToString())
 
 [<Fact>]
+let ``mul: factor ordering`` () =
+    Assert.Equal("2 * a", e2s (2G * a))
+    Assert.Equal("2 * a", e2s (a * 2G))
+
+[<Fact>]
 let ``mul: constant folding`` () =
-    Assert.Equal("12", (3G * 4G).ToString())
+    Assert.Equal("6", e2s (2G * 3G))
+    Assert.Equal("24", e2s (2G * (3G * 4G)))
+    Assert.Equal("24", e2s ((2G * 3G) * 4G))
+    Assert.Equal("8 * a", e2s (2G * (4G * a)))
+    Assert.Equal("8 * a", e2s (2G * (a * 4G)))
+    Assert.Equal("8 * a", e2s ((2G * a) * 4G))
+
+let ``mul: optimizations`` () =
+    Assert.Equal("a", e2s (1G * a))
+    Assert.Equal("0", e2s (0G * a))
 
 [<Fact>]
 let ``expr tokenizer`` () =

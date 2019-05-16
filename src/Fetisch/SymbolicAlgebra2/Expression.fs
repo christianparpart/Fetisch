@@ -102,6 +102,23 @@ module Patterns =
         | _ ->
             None
 
+    //  Matches a multiplicative term in the form of (a*x)
+    let (|IsProduct|_|) = function
+        | Number _ -> None
+        | Product [a; b] ->
+            printfn "|Term| %A * %A" a b
+            Some (a, b)
+        | Product (a::rest) -> Some (a, Product rest)
+        | x ->
+            printfn "|Term| one * (%A)" x
+            Some (Number(BigRational.One), x)
+
+    // Matches a term in form of base^exponent.
+    let (|IsPower|_|) = function
+        | Number _ -> None
+        | Power(a, b) -> Some (a, b)
+        | x -> Some (Number(BigRational.One), x)
+
 module Operations =
     open Patterns
     open FSharp.Core.LanguagePrimitives
@@ -153,28 +170,26 @@ module Operations =
             | Number a, Number b -> Number(a + b)
             | a, b -> Sum([a; b])
 
-        //  Matches a multiplicative term in the form of (a*x)
-        let (|Term|_|) = function
-            | Number _ -> None
-            | Product [a; b] ->
-                printfn "|Term| %A * %A" a b
-                Some (a, b)
-            | Product (a::rest) -> Some (a, Product rest)
-            | x ->
-                printfn "|Term| one * (%A)" x
-                Some (one, x)
-
         // Folds 2 expression lists into a single expression list.
         let rec fold = function
-            | Zero::acc, a, b -> fold (acc, a, b)
-            | Term(a, x)::p, Term(b, x')::q, r when x = x' -> fold ((mul (sum (a, b)) x)::p, q, r)
-            | Term(a, x)::p, r, Term(b, x')::q when x = x' -> fold ((mul (sum (a, b)) x)::p, q, r)
-            | r, Term(a, x)::p, Term(b, x')::q when x = x' -> fold ((mul (sum (a, b)) x)::r, p, q)
-            | r, x::xs, y::ys when orderRelation x y       -> fold (x::r, xs, y::ys)
-            | r, x::xs, y::ys                              -> fold (y::r, x::xs, ys)
-            | r, x::xs, []                                 -> fold (x::r, xs, [])
-            | r, [], y::ys                                 -> fold (y::r, [], ys)
-            | r, [], []                                    -> r
+            | Zero::acc, a, b ->
+                fold (acc, a, b)
+            | IsProduct(a, x)::p, IsProduct(b, x')::q, r when x = x' ->
+                fold ((mul (sum (a, b)) x)::p, q, r)
+            | IsProduct(a, x)::p, r, IsProduct(b, x')::q when x = x' ->
+                fold ((mul (sum (a, b)) x)::p, q, r)
+            | r, IsProduct(a, x)::p, IsProduct(b, x')::q when x = x' ->
+                fold ((mul (sum (a, b)) x)::r, p, q)
+            | r, x::xs, y::ys when orderRelation x y ->
+                fold (x::r, xs, y::ys)
+            | r, x::xs, y::ys ->
+                fold (y::r, x::xs, ys)
+            | r, x::xs, [] ->
+                fold (x::r, xs, [])
+            | r, [], y::ys ->
+                fold (y::r, [], ys)
+            | r, [], [] ->
+                r
 
         let merge (u: Expression list) (v: Expression list): Expression =
             match fold ([], u, v) with
@@ -182,8 +197,10 @@ module Operations =
             | [x] -> x
             | x   -> Sum (List.rev x)
 
+        // Adds number `v` to expression `x`
         let rec valueAdd (v: BigRational) (x: Expression) : Expression =
             match x with
+            | Number a -> Sum [Number (v + a)]
             | Sum [] -> Number v
             | Sum ((Number a)::ax) -> valueAdd (v + a) (Sum ax)
             | Sum ax -> if v = GenericZero then x else Sum ((Number v)::ax)
@@ -214,16 +231,13 @@ module Operations =
 
     // Creates the product of two factors.
     and mul (x: Expression) (y: Expression): Expression =
-        let (|Term|_|) = function
-            | Number _ -> None
-            | Power(a, b) -> Some (a, b)
-            | x -> Some (x, one)
-
-        let rec fold = function
+        //  Folds 2 expression lists into a single expression list.
+        let rec fold (result, lhs, rhs) =
+            match (result, lhs, rhs) with
             | One::r, a, b -> fold (r, a, b)
-            | Term(ab,ae)::r, Term(xb, xe)::xs, y when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
-            | Term(ab,ae)::r, y, Term(xb, xe)::xs when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
-            | r, Term(xb,xe)::xs, Term(yb,ye)::ys when xb = yb -> fold ((pow xb (add xe ye))::r, xs, ys)
+            | IsPower(ab,ae)::r, IsPower(xb, xe)::xs, y when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
+            | IsPower(ab,ae)::r, y, IsPower(xb, xe)::xs when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
+            | r, IsPower(xb,xe)::xs, IsPower(yb,ye)::ys when xb = yb -> fold ((pow xb (add xe ye))::r, xs, ys)
             | r, x::xs, y::ys -> if orderRelation x y then fold (x::r, xs, y::ys) else fold (y::r, x::xs, ys)
             | r, x::xs, y -> fold (x::r, xs, y)
             | r, [], y::ys -> fold (y::r, ys, [])
@@ -235,10 +249,24 @@ module Operations =
             | [t] -> t
             | s   -> Product(List.rev s)
 
+        // Multiplies number `v` to expression x
+        let rec valueMul (v: BigRational) (x: Expression) =
+            match x with
+            | Number a -> Product [Number (v * a)]
+            | Product [Number a] -> Product [Number (v * a)]
+            | Product [] -> Number v
+            | Product ((Number a)::ax) -> valueMul (v * a) (Product ax)
+            | Product ax -> if v = GenericOne then x else Product ((Number v)::ax)
+            | _ -> if v = GenericOne then x else Product [Number v; x]
+
         match x, y with
-        | One, a | a, One -> a
-        | Zero, _ | _, Zero -> zero
+        | One, a -> a
+        | a, One -> a
+        | Zero, _ -> zero
+        | _, Zero -> zero
         | Number a, Number b -> Number (a * b)
+        | Number a, b -> valueMul a b
+        | a, Number b -> valueMul b a
         | Product (Number(a)::ax), Product (Number(b)::bx) -> mul (Number(a * b)) (merge ax bx)
         | Product(ax), Product(bx) -> merge ax bx
         | Product(ax), b -> merge ax [b]
