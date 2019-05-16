@@ -105,13 +105,9 @@ module Patterns =
     //  Matches a multiplicative term in the form of (a*x)
     let (|IsProduct|_|) = function
         | Number _ -> None
-        | Product [a; b] ->
-            printfn "|Term| %A * %A" a b
-            Some (a, b)
+        | Product [a; b] -> Some (a, b)
         | Product (a::rest) -> Some (a, Product rest)
-        | x ->
-            printfn "|Term| one * (%A)" x
-            Some (Number(BigRational.One), x)
+        | x -> Some (Number(BigRational.One), x)
 
     // Matches a term in form of base^exponent.
     let (|IsPower|_|) = function
@@ -264,14 +260,21 @@ module Operations =
         | a, One -> a
         | Zero, _ -> zero
         | _, Zero -> zero
-        | Number a, Number b -> Number (a * b)
-        | Number a, b -> valueMul a b
-        | a, Number b -> valueMul b a
-        | Product (Number(a)::ax), Product (Number(b)::bx) -> mul (Number(a * b)) (merge ax bx)
-        | Product(ax), Product(bx) -> merge ax bx
-        | Product(ax), b -> merge ax [b]
-        | a, Product(bx) -> merge [a] bx
-        | a, b -> merge [a] [b]
+        //| Number a, Number b -> Number (a * b)
+        | Number a, b ->
+            valueMul a b
+        | a, Number b ->
+            valueMul b a
+        | Product (Number(a)::ax), Product (Number(b)::bx) ->
+            mul (Number(a * b)) (merge ax bx)
+        | Product(ax), Product(bx) ->
+            merge ax bx
+        | Product(ax), b ->
+            merge ax [b]
+        | a, Product(bx) ->
+            merge [a] bx
+        | a, b ->
+            merge [a] [b]
 
     and pow (x: Expression) (y: Expression) =
         match x, y with
@@ -324,41 +327,5 @@ module NumericLiteralG =
     let FromInt64 (x: int64) = Expression.FromBigInt (bigint x)
     let FromString (x: string) = bigint.Parse x |> Expression.FromBigInt
 
-module Parser =
-    type Token =
-        | Illegal
-        | Whitespace
-        | Eof
-        | Plus
-        | Minus
-        | Mul
-        | Div
-        | Pow
-        | NumberLiteral
-        | Identifier
-        | RndOpen
-        | RndClose
-
-    type TokenInfo = { Token: Token; Literal: string }
-
-    //let tokenize (s: string) : seq<TokenInfo> =
-    //    let str = Seq.toList s
-    //    let rec tokenize (str: char list) : TokenInfo * (char list) =
-    //        match str with
-    //        | ' '::xs -> { Token = Whitespace; Literal = " " }, xs
-    //        | [] -> { Token = Eof; Literal = "" }, []
-    //        | unknown::xs -> { Token = Illegal; Literal = string unknown }, xs
-    //    seq {
-    //        let t, r = tokenize (Seq.toList s)
-    //        yield t
-    //        yield! tokenize r
-    //    }
-
-    // let parseString (s: string) : Expression =
-
-module Test =
-    open Operations
-    let main () =
-        let x = var "x"
-        printfn "x: %A" (3G + (x + 5G))
-
+//module Parser =
+//    let parseString (s: string) : Expression =

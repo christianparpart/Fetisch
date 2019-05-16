@@ -9,11 +9,12 @@ open System
 open Fetisch
 open Fetisch.Algebra
 open Fetisch.LinearAlgebra
-open Fetisch.SymbolicAlgebra
+open Fetisch.Experimental.Symbolics
 open FSharp.Charting
 
 do Console.OutputEncoding <- Text.Encoding.UTF8
 
+#if false
 let trySimplify exprStr =
     let e1 = ExprParser.parseString exprStr
     let e2 = Simplifier.simplify e1
@@ -48,18 +49,20 @@ let misc () =
     //                        [1; 0; 5;  0]];
     //printfn "%s" (TextFormatter.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
+#endif
 
 let elementary_matrix_decomposition () =
-    let A = Matrix.createQ [[1; 2; 3]; [0; 1; 4]; [5; 6; 0]];
+    //let A = Matrix.createQ [[1; 2; 3]; [0; 1; 4]; [5; 6; 0]];
+    //let I = Matrix.init 3 3 (fun i j -> if i = j then 1N else 0N)
+    let I = Matrix.init 3 3 (fun i j -> if i = j then 1G else 0G)
+    let A = Matrix.create [[1G; 2G; 3G]; [0G; 1G; 4G]; [5G; 6G; 0G]]
+
+    printfn "     I = %s" (I.AsString())
     printfn "     A = %s" (A.AsString())
 
-    let I = Matrix.init 3 3 (fun i j -> if i = j then 1N else 0N)
-    printfn "     I = %s" (I.AsString())
-
     let C = Solver.decompose A
-    List.iteri (fun (i: int) (c: Matrix<BigRational>) -> printfn "   C_%d = %s" (1 + i) (c.AsString())) C
+    List.iteri (fun (i: int) (c: Matrix<_>) -> printfn "   C_%d = %s" (1 + i) (c.AsString())) C
 
-    let inline mul (a: Matrix<BigRational>) (b: Matrix<BigRational>): Matrix<BigRational> = a * b
     let A' = List.fold (*) I C
     printfn "    A' = %s = C_0 * ... * C_%d" (A'.AsString()) (List.length C)
 
