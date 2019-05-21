@@ -11,7 +11,7 @@ open Xunit
 open Fetisch.SymbolicAlgebra
 open Fetisch.SymbolicAlgebra.Simplifier
 
-let a, b, c = SymbolExpr("a"), SymbolExpr("b"), SymbolExpr("c")
+let a, b, c = Variable("a"), Variable("b"), Variable("c")
 
 [<Fact>]
 let ``constant folding: flat`` () =
@@ -23,7 +23,7 @@ let ``constant folding: flat`` () =
     Assert.Equal(2G, constantFold (6G / 3G))
     Assert.Equal(8G, constantFold (2G ^^ 3G))
     Assert.Equal(3G, constantFold 3G)
-    Assert.Equal(SymbolExpr("x"), constantFold (SymbolExpr("x")))
+    Assert.Equal(Variable("x"), constantFold (Variable("x")))
 
 [<Fact>]
 let ``constant folding: tree`` () =

@@ -55,44 +55,44 @@ module Simplifier =
         match expr with
         | NegExpr(a) ->
             match constantFold a with
-            | NumberExpr a' -> NumberExpr(-a')
+            | Number a' -> Number(-a')
             | NegExpr(a') -> constantFold a'
             | a' -> NegExpr(a')
         | AbsExpr(a) ->
             match constantFold a with
-            | NumberExpr a' -> NumberExpr(abs a')
+            | Number a' -> Number(abs a')
             | a' -> AbsExpr(a')
         | AddExpr(a, b) ->
             match constantFold a, constantFold b with
-            | NumberExpr a', NumberExpr b' ->
-                NumberExpr(a' + b')
+            | Number a', Number b' ->
+                Number(a' + b')
             // Force fixed sums to the right.
-            | NumberExpr a', b' ->
-                AddExpr(b', NumberExpr(a'))
+            | Number a', b' ->
+                AddExpr(b', Number(a'))
             | a', b' ->
                 AddExpr(a', b')
         | SubExpr(a, b) ->
             match constantFold a, constantFold b with
-            | NumberExpr a', NumberExpr b' -> NumberExpr(a' - b')
+            | Number a', Number b' -> Number(a' - b')
             | a', b' -> SubExpr(a', b')
         | MulExpr(a, b) ->
             match constantFold a, constantFold b with
-            | NumberExpr a', NumberExpr b' -> NumberExpr(a' * b')
+            | Number a', Number b' -> Number(a' * b')
             // force move coefficients to the left side
-            | a', NumberExpr b' -> MulExpr(NumberExpr(b'), a')
+            | a', Number b' -> MulExpr(Number(b'), a')
             | a', b' -> MulExpr(a', b')
         | DivExpr(a, b) ->
             match constantFold a, constantFold b with
-            | NumberExpr a', NumberExpr b' -> NumberExpr(a' / b')
-            | a', NumberExpr b' -> DivExpr(NumberExpr(b'), a')
+            | Number a', Number b' -> Number(a' / b')
+            | a', Number b' -> DivExpr(Number(b'), a')
             | a', b' -> DivExpr(a', b')
         | PowExpr(a, b) ->
             match constantFold a, constantFold b with
-            | NumberExpr a', NumberExpr b' -> NumberExpr(bigint.Pow(a', int b'))
+            | Number a', Number b' -> Number(bigint.Pow(a', int b'))
             | a', b' -> PowExpr(a', b')
-        | NumberExpr(_) ->
+        | Number(_) ->
             expr
-        | SymbolExpr(_) ->
+        | Variable(_) ->
             expr
 
     let simplifyWithRules (expr: Expr) (rules: Transform.Rule list): Expr =
@@ -107,8 +107,8 @@ module Simplifier =
                 | MulExpr(a, b) -> (MulExpr(simplify a, simplify b))
                 | DivExpr(a, b) -> (DivExpr(simplify a, simplify b))
                 | PowExpr(a, b) -> (PowExpr(simplify a, simplify b))
-                | SymbolExpr(_) -> expr
-                | NumberExpr(_) -> expr
+                | Variable(_) -> expr
+                | Number(_) -> expr
             let applyRules (expr: Expr): Expr =
                 match Transform.matchRuleListCommutative expr rules with
                 | Some (rule, matches) ->

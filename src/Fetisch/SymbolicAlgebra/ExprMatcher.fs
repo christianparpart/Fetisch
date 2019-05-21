@@ -60,8 +60,8 @@ module ExprMatcher =
             tryMergeMatchLists (matchRule a' a) (matchRule b' b)
         | PowExpr(a, b), PowExpr(a', b') ->
             tryMergeMatchLists (matchRule a' a) (matchRule b' b)
-        | SymbolExpr(s), _ ->
+        | Variable(s), _ ->
             Some [{Name = s; Expression = expr}]
-        | NumberExpr(n), NumberExpr(n') when n = n' ->
+        | Number(n), Number(n') when n = n' ->
             Some []
         | _-> None

@@ -140,11 +140,11 @@ module ExprParser =
         member private self.PrimaryExpr() : Expr =
             match self.CurrentToken() with
             | Token.NumberLiteral ->
-                let expr = NumberExpr(bigint.Parse(scanner.CurrentLiteral()))
+                let expr = Number(bigint.Parse(scanner.CurrentLiteral()))
                 self.AdvanceToken()
                 expr
             | Token.Identifier ->
-                let expr = SymbolExpr(scanner.CurrentLiteral())
+                let expr = Variable(scanner.CurrentLiteral())
                 self.AdvanceToken()
                 expr
             | Token.RndOpen ->

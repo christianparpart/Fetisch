@@ -18,13 +18,13 @@ type Expr =
     | MulExpr of left : Expr * right : Expr
     | DivExpr of left : Expr * right : Expr
     | PowExpr of left : Expr * right : Expr
-    | SymbolExpr of symbol : string
-    | NumberExpr of literal : bigint
+    | Variable of symbol : string
+    | Number of literal : bigint
     with
-        static member Zero = NumberExpr(0I)
-        static member One = NumberExpr(1I)
-        static member FromInt (x: int) = NumberExpr(bigint x)
-        static member FromBigInt (x: bigint) = NumberExpr(x)
+        static member Zero = Number(0I)
+        static member One = Number(1I)
+        static member FromInt (x: int) = Number(bigint x)
+        static member FromBigInt (x: bigint) = Number(x)
 
         static member ( + ) (a: Expr, b: Expr) : Expr = AddExpr(a, b)
         static member ( - ) (a: Expr, b: Expr) : Expr = SubExpr(a, b)
@@ -44,8 +44,8 @@ type Expr =
                 | MulExpr(_, _) -> 2
                 | DivExpr(_, _) -> 2
                 | PowExpr(_, _) -> 3
-                | SymbolExpr(_) -> 4
-                | NumberExpr(_) -> 4
+                | Variable(_) -> 4
+                | Number(_) -> 4
 
         member this.AsString = this.ToString()
 
@@ -63,8 +63,8 @@ type Expr =
             | MulExpr(left, right) -> sprintf "%s * %s" (embrace left) (embrace right)
             | DivExpr(left, right) -> sprintf "%s / %s" (embrace left) (embrace right)
             | PowExpr(left, right) -> sprintf "%s^%s" (embrace left) (embrace right)
-            | SymbolExpr(symbol) -> sprintf "%s" symbol
-            | NumberExpr(value) -> sprintf "%s" (value.ToString())
+            | Variable(symbol) -> sprintf "%s" symbol
+            | Number(value) -> sprintf "%s" (value.ToString())
 
 // Provides user defined literal with suffix G.
 [<RequireQualifiedAccess>]

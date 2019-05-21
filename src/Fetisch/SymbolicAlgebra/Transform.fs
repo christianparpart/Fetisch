@@ -57,6 +57,6 @@ module Transform =
         | MulExpr(a, b) -> MulExpr(applyMatches a matches, applyMatches b matches)
         | DivExpr(a, b) -> DivExpr(applyMatches a matches, applyMatches b matches)
         | PowExpr(a, b) -> PowExpr(applyMatches a matches, applyMatches b matches)
-        | NumberExpr(n) -> NumberExpr(n)
-        | SymbolExpr(s) -> (List.find (fun (m: Match) -> m.Name = s) matches).Expression
+        | Number(n) -> Number(n)
+        | Variable(s) -> (List.find (fun (m: Match) -> m.Name = s) matches).Expression
 

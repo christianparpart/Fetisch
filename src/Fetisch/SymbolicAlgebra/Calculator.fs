@@ -26,9 +26,9 @@ module Calculator =
                 let a' = calculate a
                 let b' = int (calculate b)
                 bigint.Pow(a', b')
-            | SymbolExpr(s) ->
+            | Variable(s) ->
                 match smap.TryFind s with
                 | Some v -> calculate v
                 | None -> invalidOp (sprintf "Unknown symbol `%s`." s)
-            | NumberExpr(n) -> n
+            | Number(n) -> n
         calculate e

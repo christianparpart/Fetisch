@@ -11,8 +11,8 @@ open Xunit
 open Fetisch.SymbolicAlgebra
 open Fetisch.SymbolicAlgebra.ExprMatcher
 
-let a, b = SymbolExpr("a"), SymbolExpr("b")
-let x, y = SymbolExpr("x"), SymbolExpr("y")
+let a, b = Variable("a"), Variable("b")
+let x, y = Variable("x"), Variable("y")
 
 [<Fact>]
 let ``match: basic`` () =
