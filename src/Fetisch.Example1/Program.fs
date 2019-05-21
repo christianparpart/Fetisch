@@ -59,9 +59,21 @@ let elementary_matrix_decomposition () =
 
     printfn "     I = %s" (I.AsString())
     printfn "     A = %s" (A.AsString())
+    printfn ""
 
-    let C = Solver.decompose A
-    List.iteri (fun (i: int) (c: Matrix<_>) -> printfn "   C_%d = %s" (1 + i) (c.AsString())) C
+    let steps = Solver.rowCanonicalFormIterative A
+    let ops = Solver.elementaryOperations steps
+    let print_op (i: int) (op: ElementaryOperation<_>) =
+        printfn "   C_%d = %s" (1 + i) (TextFormatter.formatOperation op)
+    List.iteri print_op ops
+    printfn ""
+    
+    let C = Solver.elementaryMatrices (Matrix.rowCount A) ops
+    //let C = Solver.decompose A
+    let print_c (i: int) (c_i: Matrix<_>) =
+        printfn "   C_%d = %s" (1 + i) (c_i.AsString())
+    List.iteri print_c C
+    printfn ""
 
     let A' = List.fold (*) I C
     printfn "    A' = %s = C_0 * ... * C_%d" (A'.AsString()) (List.length C)

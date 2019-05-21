@@ -113,7 +113,7 @@ module Patterns =
     let (|IsPower|_|) = function
         | Number _ -> None
         | Power(a, b) -> Some (a, b)
-        | x -> Some (Number(BigRational.One), x)
+        | x -> Some (x, Number(BigRational.One))
 
 module Operations =
     open Patterns
@@ -198,15 +198,16 @@ module Operations =
             match x with
             | Number a -> Sum [Number (v + a)]
             | Sum [] -> Number v
+            | Sum [Number a] -> Sum [Number (v + a)]
             | Sum ((Number a)::ax) -> valueAdd (v + a) (Sum ax)
             | Sum ax -> if v = GenericZero then x else Sum ((Number v)::ax)
-            | x when v = GenericZero -> x
-            | _ -> Sum [Number v; x]
+            | _ -> if v = GenericZero then x else Sum [Number v; x]
 
         match (x, y) with
         | Zero, a -> a
         | a, Zero -> a
         // one constant value and one something else
+        | Number a, Number b -> Number (a + b)
         | Number a, b -> valueAdd a b
         | a, Number b -> valueAdd b a
         // both Sum have constant value
@@ -249,8 +250,8 @@ module Operations =
         let rec valueMul (v: BigRational) (x: Expression) =
             match x with
             | Number a -> Product [Number (v * a)]
-            | Product [Number a] -> Product [Number (v * a)]
             | Product [] -> Number v
+            | Product [Number a] -> Product [Number (v * a)]
             | Product ((Number a)::ax) -> valueMul (v * a) (Product ax)
             | Product ax -> if v = GenericOne then x else Product ((Number v)::ax)
             | _ -> if v = GenericOne then x else Product [Number v; x]
@@ -260,7 +261,8 @@ module Operations =
         | a, One -> a
         | Zero, _ -> zero
         | _, Zero -> zero
-        //| Number a, Number b -> Number (a * b)
+        | Number a, Number b ->
+            Number (a * b)
         | Number a, b ->
             valueMul a b
         | a, Number b ->
