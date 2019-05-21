@@ -14,25 +14,23 @@ open FSharp.Charting
 
 do Console.OutputEncoding <- Text.Encoding.UTF8
 
-#if false
-let trySimplify exprStr =
-    let e1 = ExprParser.parseString exprStr
-    let e2 = Simplifier.simplify e1
-    let s2 = e2.ToString()
-    printfn "%*s%A = %A" ((max 15 (s2.Length)) - s2.Length) " " e2 e1
+//let trySimplify exprStr =
+//    let e1 = ExprParser.parseString exprStr
+//    let e2 = Simplifier.simplify e1
+//    let s2 = e2.ToString()
+//    printfn "%*s%A = %A" ((max 15 (s2.Length)) - s2.Length) " " e2 e1
 
 let misc () =
     // Aufgabe 1, Matrix B
-    let λ = SymbolExpr("λ")
+    let λ = Variable("λ")
     let a = Matrix.create [[2G*λ;  λ; -1G; 3G*λ];
                            [  0G; 0G; -2G;   1G];
                            [   λ; 1G; -1G;   0G];
                            [2G*λ; 0G;  2G;   1G]];
+    printfn "A := %s" (a.AsString())
 
-    //printfn "%s" (TextFormatter.formatMatrix a)
-
-    //let b = Solver.rowCanonicalForm(a)
-    //printfn "%s" (TextFormatter.formatMatrix b)
+    let b = Solver.rowCanonicalForm(a)
+    printfn "%s" (TextFormatter.formatMatrix b)
 
     // XXX for automatic simplification I could create a SimplifiedSymbolicAlgebra
     // or WrappedAlgebra< ^F> that would auto-simplify upon each operation.
@@ -41,7 +39,7 @@ let misc () =
 
     let d = Matrix.determinant a
     printfn "det(A) = %A" d
-    printfn "det(A) = %A" (Simplifier.simplify d)
+    //printfn "det(A) = %A" (Simplifier.simplify d)
 
     //let a = Matrix.createQ [[1; 0; 0; -1];
     //                        [3; 0; 0;  5];
@@ -49,7 +47,6 @@ let misc () =
     //                        [1; 0; 5;  0]];
     //printfn "%s" (TextFormatter.formatMatrix a)
     //printfn "det(A): %s" ((Matrix.determinant a).ToString())
-#endif
 
 let elementary_matrix_decomposition () =
     //let A = Matrix.createQ [[1; 2; 3]; [0; 1; 4]; [5; 6; 0]];
@@ -88,6 +85,7 @@ let elementary_matrix_decomposition () =
 [<EntryPoint>]
 let main argv =
     elementary_matrix_decomposition()
+    misc()
     //let t = Fetisch.Experimental.Symbolics.ExprParser.tokenizeString "12 * (3 + 4)"
     //printfn "t: %A" t
     //Experimental.Symbolics.Test.main()

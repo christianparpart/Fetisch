@@ -41,17 +41,16 @@ type Expression =
     | Constant of Constant
     | Number of BigRational
     with
+        /// Retrieves precedence of this expression. Higher number means higher precedence to other expressions.
         member this.Precedence =
             match this with
             | Number _ -> 5
             | Constant _ -> 5
             | Variable _ -> 5
-            | Function _ -> 5
-            | Sum _ -> 4
-            | Product _ -> 3
-            | Power _ -> 2
-
-        member this.AsString = this.ToString()
+            | Function _ -> 4
+            | Sum _ -> 1
+            | Product _ -> 2
+            | Power _ -> 3
 
         override this.ToString() =
             let embrace (e: Expression) =
@@ -73,6 +72,19 @@ type Expression =
                 List.fold folder "" p
             | Power (b, e) ->
                 sprintf "%s^%s" (embrace b) (embrace e)
+
+        // Used for StructuredFormatDisplay for easy information access in IDE debugging.
+        member this.AsString =
+            let typeName =
+                match this with
+                | Power (_, _) -> "Power"
+                | Product _ -> "Product"
+                | Sum _ -> "Sum"
+                | Function (_, _) -> "Function"
+                | Variable _ -> "Variable"
+                | Constant _ -> "Constant"
+                | Number _ -> "Number"
+            (sprintf "%s: %s" typeName (this.ToString()))
 
 module Patterns =
     open FSharp.Core.LanguagePrimitives
@@ -230,11 +242,20 @@ module Operations =
     and mul (x: Expression) (y: Expression): Expression =
         //  Folds 2 expression lists into a single expression list.
         let rec fold (result, lhs, rhs) =
+            // a * a^(-1) = 1
             match (result, lhs, rhs) with
-            | One::r, a, b -> fold (r, a, b)
-            | IsPower(ab,ae)::r, IsPower(xb, xe)::xs, y when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
-            | IsPower(ab,ae)::r, y, IsPower(xb, xe)::xs when ab = xb -> fold ((pow ab (add ae xe))::r, xs, y)
-            | r, IsPower(xb,xe)::xs, IsPower(yb,ye)::ys when xb = yb -> fold ((pow xb (add xe ye))::r, xs, ys)
+            | One::r, a, b ->
+                fold (r, a, b)
+            | IsPower(ab, ae)::r, IsPower(xb, xe)::xs, y when ab = xb && xe = Number(-1N) ->
+                // a^b * r * a^(-1) * c * y = r * c * y
+                fold (r, xs, y)
+            | IsPower(ab, ae)::r, IsPower(xb, xe)::xs, y when ab = xb ->
+                // a^a' * a^x' * y -> a^(a' + x') * y
+                fold ((pow ab (add ae xe))::r, xs, y)
+            | IsPower(ab, ae)::r, y, IsPower(xb, xe)::xs when ab = xb ->
+                fold ((pow ab (add ae xe))::r, xs, y)
+            | r, IsPower(xb,xe)::xs, IsPower(yb,ye)::ys when xb = yb ->
+                fold ((pow xb (add xe ye))::r, xs, ys)
             | r, x::xs, y::ys -> if orderRelation x y then fold (x::r, xs, y::ys) else fold (y::r, x::xs, ys)
             | r, x::xs, y -> fold (x::r, xs, y)
             | r, [], y::ys -> fold (y::r, ys, [])
