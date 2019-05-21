@@ -17,11 +17,13 @@ namespace Fetisch.LinearAlgebra
 open Fetisch.Algebra
 open Fetisch.Util
 
+open Fetisch.Experimental // Symbolics
 open FSharp.Core.LanguagePrimitives
 open System.Diagnostics
 
 type RowIndex = int
 type ColumnIndex = int
+type Scalar = Symbolics.Expression
 
 type ElementaryOperation< ^F when ^F : (static member ( * ): ^F * ^F -> ^F)
                               and ^F : (static member ( + ): ^F * ^F -> ^F)> =
