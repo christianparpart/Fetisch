@@ -142,35 +142,48 @@ module Operations =
     let isZero = function | Zero -> true | _ -> false
     let isOne  = function | One  -> true | _ -> false
 
+    let rec internal zipped (f: Expression -> Expression -> int) (a: Expression list) (b: Expression list): int =
+        match a, b with
+        | x::xs, y::ys when x <> y -> f x y
+        | x::xs, y::ys -> zipped f xs ys
+        | [], y::ys -> -1  // everything is equal up to the length of the left list
+        | _, [] -> +1      // everything is equal up to the length of the right list
+
+    // Returns -1 (<), 0 (=), or +1 (>)
+    let compare (x: Expression) (y: Expression): int =
+        let cmp a b =
+            if a < b then -1
+            elif a = b then 0
+            else +1
+
+        let rec compare a b =
+            match a, b with
+            | Number x, Number y -> cmp x y
+            | Constant x, Constant y -> cmp x y
+            | Variable x, Variable y -> cmp x y
+            | Sum xs, Sum ys -> zippedCompare xs ys
+            | Product xs, Product ys -> zippedCompare xs ys
+            | Power (xr,xp), Power (yr,yp) -> if xr <> yr then compare xr yr else compare xp yp
+            | Function (fx, x), Function (fy, y) -> if fx <> fy then cmp fx fy else compare x y
+            // lose type matches
+            | Number _, _ -> -1
+            | _, Number _ -> +1
+            | Constant _, _ -> -1
+            | _, Constant _ -> +1
+            | Variable _, _ -> -1
+            | _, Variable _ -> +1
+            | Sum xs, y -> zippedCompare xs [y]
+            | x, Sum ys -> zippedCompare [x] ys
+            | Product xs, y -> zippedCompare xs [y]
+            | x, Product ys -> zippedCompare [x] ys
+            | Power (xr, xp), y -> if xr <> y then compare xr y else compare xp one
+            | x, Power (yr, yp) -> if x <> yr then compare x yr else compare one yp
+        and zippedCompare a b = zipped compare a b
+        compare x y
+
     // Order-relation (<) between two expressions.
-    let internal orderRelation (x: Expression) (y: Expression): bool =
-        let rec relation a b =
-            match a, b with
-            | Number x, Number y -> x < y
-            | Number _, _ -> true
-            | _, Number _ -> false
-            | Constant x, Constant y -> x < y
-            | Constant _, _ -> true
-            | _, Constant _ -> false
-            | Variable x, Variable y -> x < y
-            | Variable _, _ -> true
-            | _, Variable _ -> false
-            | Function (fx, x), Function (fy, y) -> if fx <> fy then fx < fy else relation x y
-            | Power (xr, xp), y -> if xr <> y then relation xr y else relation xp one
-            | x, Power (yr, yp) -> if x <> yr then relation x yr else relation one yp
-            | Product xs, Product ys -> zippedRelation xs ys
-            | Product xs, y -> zippedRelation xs [y]
-            | x, Product ys -> zippedRelation [x] ys
-            | Sum xs, Sum ys -> zippedRelation xs ys
-            | Sum xs, y -> zippedRelation xs [y]
-            | x, Sum ys -> zippedRelation [x] ys
-        and zippedRelation a b =
-            match a, b with
-            | x::xs, y::ys when x <> y -> relation x y
-            | x::xs, y::ys -> zippedRelation xs ys
-            | [], y::ys -> true
-            | _, [] -> false
-        relation x y
+    let orderRelation (x: Expression) (y: Expression): bool =
+        (compare x y) < 0
 
     // Creates the Sum of two summands.
     let rec add (x: Expression) (y: Expression): Expression =

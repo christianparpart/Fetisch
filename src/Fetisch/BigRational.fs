@@ -107,10 +107,16 @@ type BigRational(_numerator: bigint, _denominator: bigint) =
         //   (a/b) ^ (c/d)
         // = ((a/b)^c)^(1/d)
         // = ((a/b)^(1/d))^c
-        let u = q.Numerator
-        let v = q.Denominator
+
+        let q' = abs q
+        let u = q'.Numerator
+        let v = q'.Denominator
         let x = BigRational.FromBigIntFraction(p.Numerator ** int(1I / v), p.Denominator ** int(1I / v))
-        BigRational.FromBigIntFraction(x.Numerator ** int(u), x.Denominator ** int(u))
+        let y = BigRational.FromBigIntFraction(x.Numerator ** int(u), x.Denominator ** int(u))
+        if q.IsNegative then
+            BigRational.One / y
+        else
+            y
 
     static member Parse (str: string) =
         match str.Split('/') with

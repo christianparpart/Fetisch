@@ -38,8 +38,9 @@ let ``mul`` () =
 
 [<Fact>]
 let ``div`` () =
-    Assert.Equal(1N, a / a)
-    Assert.Equal(1N / 2N, (a / a) / a)
+    let a = 2N
+    Assert.Equal(BigRational.One, a / a)
+    Assert.Equal(BigRational.FromIntFraction(1, 2), (a / a) / a)
 
 [<Fact>]
 let ``pow`` () =

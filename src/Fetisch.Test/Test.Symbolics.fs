@@ -17,6 +17,18 @@ let e2s (e: Expression): string =
     e.ToString()
 
 [<Fact>]
+let ``orderRelation`` () =
+    let a = 2G
+    let b = 3G * Variable("a")
+    let c = Variable("a") ** 3G
+    let r1 = Operations.orderRelation a b
+    let r2 = Operations.orderRelation b c
+    let r3 = Operations.orderRelation a c
+    Assert.True(r1)
+    Assert.True(r2)
+    Assert.True(r3)
+
+[<Fact>]
 let ``add: constant folding`` () =
     Assert.Equal("5", e2s (2G + 3G))
     Assert.Equal("9", e2s (2G + (3G + 4G)))
@@ -57,6 +69,14 @@ let ``mul: optimizations`` () =
     Assert.Equal("a", e2s (1G * a))
     Assert.Equal("0", e2s (0G * a))
 
+let ``proper merging`` () =
+    let a = Variable "a"
+    let b = Variable "b"
+    let lhs = a**2G + a * b
+    let rhs = a * b + b ** 2G
+    let res = lhs + rhs
+    Assert.Equal("", res.ToString())
+
 [<Fact>]
 let ``expr tokenizer`` () =
     let t = ExprParser.tokenizeString "12 * (34 + 5)"
@@ -69,4 +89,9 @@ let ``expr tokenizer`` () =
     Assert.Equal(Token.NumberLiteral(5I), List.item 5 t)
     Assert.Equal(Token.RndClose, List.item 6 t)
     Assert.Equal(Token.Eof, List.item 7 t)
+
+[<Fact>]
+let ``expr parser`` () =
+    // TODO
+    Assert.True(true)
 

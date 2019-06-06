@@ -30,7 +30,8 @@ let misc () =
     printfn "A := %s" (a.AsString())
 
     let b = Solver.rowCanonicalForm(a)
-    printfn "%s" (TextFormatter.formatMatrix b)
+    //printfn "%s" (TextFormatter.formatMatrix b)
+    printfn "B := %s" (b.AsString())
 
     // XXX for automatic simplification I could create a SimplifiedSymbolicAlgebra
     // or WrappedAlgebra< ^F> that would auto-simplify upon each operation.
