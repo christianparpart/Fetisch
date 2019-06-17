@@ -44,12 +44,16 @@ module ExprParser =
             | _ ->
                 None
         let rec tokenize (s: char list) : Token list =
+            printfn "tokenize: %A" s
             match s with
             | [] -> [Eof]
             | IsWhiteSpace (_, tail) -> tokenize tail
             | IsNumber (num, tail) -> NumberLiteral(bigint.Parse(num)) :: (tokenize tail)
-            | '*' :: tail -> Mul :: (tokenize tail)
             | '+' :: tail -> Plus :: (tokenize tail)
+            | '-' :: tail -> Minus :: (tokenize tail)
+            | '*' :: '*' :: tail -> Pow :: (tokenize tail)
+            | '*' :: tail -> Mul :: (tokenize tail)
+            | '/' :: tail -> Div :: (tokenize tail)
             | '(' :: tail -> RndOpen :: (tokenize tail)
             | ')' :: tail -> RndClose :: (tokenize tail)
             | _ -> [Illegal (String.Concat (Array.ofList s))]
